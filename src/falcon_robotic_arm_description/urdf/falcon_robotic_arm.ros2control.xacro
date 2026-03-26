@@ -1,0 +1,251 @@
+<?xml version="1.0"?>
+<!--
+  *****************************************************************************************
+  *  Filename:       falcon_robotic_arm.ros2control.xacro
+  *  Description:    ros2_control hardware interface block for the Falcon Robotic Arm.
+  *                  Selects between three hardware backends via xacro:if/unless:
+  *
+  *                    sim_gazebo = true  → gz_ros2_control/GazeboSimSystem
+  *                                         (Gazebo owns the controller_manager)
+  *
+  *                    sim_gazebo = false, hardware_type = 'real'
+  *                                       → falcon_arm_hardware/FalconArmHardwareInterface
+  *                                         (UART serial to STM32 Nucleo)
+  *
+  *                    sim_gazebo = false, hardware_type ≠ 'real'
+  *                                       → mock_components/GenericSystem
+  *                                         (fake hardware for RViz / CI)
+  *
+  *                  Gazebo block includes position_proportional_gain per joint to
+  *                  switch gz_ros2_control from "teleport mode" to PD effort control,
+  *                  which is required to correctly resist gravity on joints 2 and 3.
+  *
+  *  Author:         BARGAVAN R - MIT
+  *  Co-Author:      RON NIRVIN J
+  *
+  *  FIX (2026-03-15):
+  *    Added explicit xacro:arg declarations for sim_gazebo, hardware_type, serial_port
+  *    so this file can be safely evaluated standalone (e.g. by MoveIt Setup Assistant).
+  *    Replaced bare ${hardware_type == 'real'} expressions — which fail because
+  *    hardware_type is an arg, not a property — with a local xacro:property 'hw_type'
+  *    that is set from $(arg hardware_type).  The ${hw_type == 'real'} expression then
+  *    evaluates correctly in both standalone and included contexts.
+  *
+  *  Usage:
+  *    Included automatically by falcon_robotic_arm.xacro — do not include directly.
+  *  *****************************************************************************************
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Declare args here so xacro can resolve them when this file is processed
+       both standalone (MoveIt Setup Assistant) and as an include. -->
+  <xacro:arg name="sim_gazebo"    default="false"/>
+  <xacro:arg name="hardware_type" default="fake"/>
+  <xacro:arg name="serial_port"   default="/dev/ttyACM0"/>
+
+  <!-- Resolve the arg into a property so it can be used in Python expressions
+       inside xacro:if / xacro:unless value="${...}" blocks. -->
+  <xacro:property name="hw_type" value="$(arg hardware_type)"/>
+
+  <xacro:if value="$(arg sim_gazebo)">
+    <ros2_control name="FalconArm" type="system">
+      <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </hardware>
+
+      <!-- position_proportional_gain switches gz_ros2_control from "direct teleport"
+           mode to PD effort control. Without it, Gazebo teleports the joint each step
+           while simultaneously applying gravity, causing joints 2 and 3 (the only joints
+           with significant gravity load) to lock up at certain arm poses.
+           Gains are higher for heavier joints to overcome gravity torque. -->
+
+      <joint name="joint_1">
+        <param name="position_proportional_gain">100.0</param>  <!-- vertical axis, negligible gravity -->
+        <command_interface name="position">
+          <param name="min">-1.5708</param>
+          <param name="max">1.5708</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_2">
+        <param name="position_proportional_gain">500.0</param>  <!-- shoulder: heaviest gravity load -->
+        <command_interface name="position">
+          <param name="min">-1.5708</param>
+          <param name="max">1.5708</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_3">
+        <param name="position_proportional_gain">300.0</param>  <!-- elbow: moderate gravity load -->
+        <command_interface name="position">
+          <param name="min">-1.5708</param>
+          <param name="max">1.5708</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_4">
+        <param name="position_proportional_gain">100.0</param>
+        <command_interface name="position">
+          <param name="min">-1.5708</param>
+          <param name="max">1.5708</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.30</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_5">
+        <param name="position_proportional_gain">100.0</param>
+        <command_interface name="position">
+          <param name="min">-1.5708</param>
+          <param name="max">1.5708</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="gripper_joint_1">
+        <param name="position_proportional_gain">50.0</param>
+        <command_interface name="position">
+          <param name="min">-0.7</param>
+          <param name="max">0.0</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="gripper_joint_2">
+        <param name="position_proportional_gain">50.0</param>
+        <command_interface name="position">
+          <param name="min">-0.7</param>
+          <param name="max">0.0</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+    </ros2_control>
+  </xacro:if>
+
+  <xacro:unless value="$(arg sim_gazebo)">
+    <ros2_control name="FalconArm" type="system">
+
+      <!-- FIX: was ${hardware_type == 'real'} — hardware_type is an xacro:arg, not a
+           property, so it cannot be used directly inside ${} Python expressions.
+           Use the hw_type property declared above instead. -->
+      <xacro:if value="${hw_type == 'real'}">
+        <hardware>
+          <plugin>falcon_arm_hardware/FalconArmHardwareInterface</plugin>
+          <param name="serial_port">$(arg serial_port)</param>
+          <param name="baud_rate">115200</param>
+          <param name="timeout_ms">1000</param>
+        </hardware>
+      </xacro:if>
+
+      <xacro:unless value="${hw_type == 'real'}">
+        <hardware>
+          <plugin>mock_components/GenericSystem</plugin>
+          <!--<param name="calculate_dynamics">true</param> -->
+        </hardware>
+      </xacro:unless>
+
+      <joint name="joint_1">
+        <command_interface name="position">
+          <param name="min">-1.5708</param>
+          <param name="max">1.5708</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_2">
+        <command_interface name="position">
+          <param name="min">-1.5708</param>
+          <param name="max">1.5708</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">-1.10</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_3">
+        <command_interface name="position">
+          <param name="min">-1.5708</param>
+          <param name="max">1.5708</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">1.25</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_4">
+        <command_interface name="position">
+          <param name="min">-1.5708</param>
+          <param name="max">1.5708</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.45</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="joint_5">
+        <command_interface name="position">
+          <param name="min">-1.5708</param>
+          <param name="max">1.5708</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="gripper_joint_1">
+        <command_interface name="position">
+          <param name="min">-0.7</param>
+          <param name="max">0.0</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="gripper_joint_2">
+        <command_interface name="position">
+          <param name="min">-0.7</param>
+          <param name="max">0.0</param>
+        </command_interface>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+
+    </ros2_control>
+  </xacro:unless>
+
+</robot>

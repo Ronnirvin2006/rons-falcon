@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!--
+  *****************************************************************************************
+  *  Filename:       falcon_robotic_arm.gazebo
+  *  Description:    Gazebo-specific properties for the Falcon Robotic Arm.
+  *                  Assigns Gazebo materials (colours visible in the Gazebo GUI),
+  *                  surface friction coefficients, and the gz_ros2_control plugin.
+  *
+  *                  Self-collision policy:
+  *                    Per-link self_collide = false  — disables individual-link self
+  *                    collision (prevents joint-fight artifacts at the joint chain).
+  *                    Model-level <self_collide>true</self_collide> enables collisions
+  *                    between non-adjacent links (e.g. gripper hitting upper arm),
+  *                    with automatic exclusion of parent-child pairs via URDF joints.
+  *
+  *                  Plugin:
+  *                    ign_ros2_control::IgnitionROS2ControlPlugin starts the
+  *                    controller_manager inside Gazebo and loads joint controllers
+  *                    from falcon_controllers.yaml.
+  *
+  *  Author:         BARGAVAN R - MIT
+  *  Co-Author:      RON NIRVIN J
+  *
+  *  Usage:
+  *    Included automatically by falcon_robotic_arm.xacro — do not include directly.
+  *    Only active when sim_gazebo:=true is passed to the xacro expansion.
+  *  *****************************************************************************************
+-->
+<robot name="falcon_robotic_arm" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <gazebo>
+    <!-- Model-level self_collide: Gazebo automatically excludes adjacent links
+         (parent-child via joints) so they don't fight each other at the joints.
+         Only non-adjacent links (e.g. link_1 swinging into the base, gripper
+         hitting the upper arm) are physically blocked. Per-link self_collide
+         flags above stay false — model-level is the correct mechanism. -->
+    <self_collide>true</self_collide>
+    <plugin name="ign_ros2_control::IgnitionROS2ControlPlugin"
+            filename="libgz_ros2_control-system.so">
+      <parameters>$(find falcon_robotic_arm_description)/config/falcon_controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="base_link">
+    <material>Gazebo/Orange</material>
+    <mu1>0.8</mu1>
+    <mu2>0.8</mu2>
+    <self_collide>false</self_collide>
+    <gravity>true</gravity>
+  </gazebo>
+
+  <gazebo reference="link_1">
+    <material>Gazebo/Blue</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>false</self_collide>
+  </gazebo>
+
+  <gazebo reference="link_2">
+    <material>Gazebo/Green</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>false</self_collide>
+  </gazebo>
+
+  <gazebo reference="link_3">
+    <material>Gazebo/Yellow</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>false</self_collide>
+  </gazebo>
+
+  <gazebo reference="link_4">
+    <material>Gazebo/Purple</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>false</self_collide>
+  </gazebo>
+
+  <gazebo reference="link_5">
+    <material>Gazebo/Turquoise</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <self_collide>false</self_collide>
+  </gazebo>
+
+  <gazebo reference="gripper_link_1">
+    <material>Gazebo/Red</material>
+    <mu1>0.5</mu1>
+    <mu2>0.5</mu2>
+    <self_collide>false</self_collide>
+  </gazebo>
+
+  <gazebo reference="gripper_link_2">
+    <material>Gazebo/Red</material>
+    <mu1>0.5</mu1>
+    <mu2>0.5</mu2>
+    <self_collide>false</self_collide>
+  </gazebo>
+
+</robot>

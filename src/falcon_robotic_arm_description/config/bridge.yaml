@@ -1,0 +1,33 @@
+# *****************************************************************************************
+# *  Filename:       bridge.yaml
+# *  Description:    ros_gz_bridge topic mapping for the Falcon Arm Gazebo simulation.
+# *                  Defines which Gazebo internal topics are forwarded to ROS2 and
+# *                  in which direction the data flows.
+# *
+# *                  Entries:
+# *                    /clock       GZ → ROS  — simulation time for use_sim_time nodes
+# *                    /joint_states GZ → ROS — joint position/velocity from gz_ros2_control
+# *
+# *  Author:         BARGAVAN R - MIT
+# *  Co-Author:      RON NIRVIN J
+# *
+# *  Usage:
+# *    Loaded by ros_gz_bridge parameter_bridge node in sim_bringup.launch.py.
+# *    Pass via:  --ros-args -p config_file:=<path>/bridge.yaml
+# *****************************************************************************************
+
+# gz topic published by the simulator core
+- ros_topic_name: "clock"
+  gz_topic_name: "clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+
+
+# gz topic published by JointState plugin
+- ros_topic_name: "joint_states"
+  gz_topic_name: "joint_states"
+  ros_type_name: "sensor_msgs/msg/JointState"
+  gz_type_name: "gz.msgs.Model"
+  direction: GZ_TO_ROS
+

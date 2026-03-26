@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<library path="libfalcon_arm_hardware_interface">
+  <!-- This file tells pluginlib where to find the hardware interface plugin -->
+  <!-- It maps the fully qualified class name to the library that contains it -->
+  <class type="falcon_arm_hardware::FalconArmHardwareInterface" 
+         base_class_type="hardware_interface::SystemInterface">
+    <!-- Description of what this plugin does -->
+    <description>
+      Hardware interface plugin for Falcon Robot Arm STM32 control.
+      Communicates with STM32 microcontroller via serial port.
+      Converts joint commands from radians to degrees for the firmware.
+    </description>
+  </class>
+</library>

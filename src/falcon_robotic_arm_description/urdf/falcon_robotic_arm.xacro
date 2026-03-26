@@ -1,0 +1,288 @@
+<?xml version="1.0" ?>
+<!--
+  *****************************************************************************************
+  *  Filename:       falcon_robotic_arm.xacro
+  *  Description:    Primary URDF/xacro description for the Falcon Robotic Arm.
+  *                  Defines all links, joints, inertial properties, visual meshes,
+  *                  and collision geometry for the 6-DOF arm with servo gripper.
+  *
+  *                  Kinematic structure:
+  *                    world → base_link → link_1 → link_2 → link_3 →
+  *                    link_4 → link_5 → gripper_link_1
+  *                                    ↘ gripper_link_2
+  *
+  *                  Joint limits (all revolute):
+  *                    joint_1–5     : ±1.5708 rad (±90°)
+  *                    gripper_joint_1/2 : −0.7 to 0 rad
+  *
+  *  Author:         BARGAVAN R - MIT
+  *  Co-Author:      RON NIRVIN J
+  *
+  *  Xacro arguments:
+  *    sim_gazebo    (bool, default false)  — selects Gazebo vs real/fake plugin
+  *    hardware_type (string, default fake) — 'fake' | 'real'
+  *    serial_port   (string, default /dev/ttyACM0) — UART device for real hardware
+  *    mesh_path     (string, default package://...) — absolute or package URI to meshes
+  *
+  *  Includes:
+  *    materials.xacro              — RViz2 colour definitions
+  *    falcon_robotic_arm.ros2control.xacro — ros2_control hardware interface tags
+  *    falcon_robotic_arm.gazebo    — Gazebo material and plugin tags
+  *  *****************************************************************************************
+-->
+<robot name="falcon_robotic_arm_description" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="sim_gazebo"    default="false"/>
+  <xacro:arg name="hardware_type" default="fake"/>
+  <xacro:arg name="serial_port"   default="/dev/ttyACM0"/>
+  <xacro:arg name="mesh_path"     default="package://falcon_robotic_arm_description/meshes"/>
+
+  <xacro:include filename="$(find falcon_robotic_arm_description)/urdf/materials.xacro"/>
+  <xacro:include filename="$(find falcon_robotic_arm_description)/urdf/falcon_robotic_arm.ros2control.xacro"/>
+  <xacro:include filename="$(find falcon_robotic_arm_description)/urdf/falcon_robotic_arm.gazebo"/>
+
+  <link name="world"/>
+
+  <!-- AFTER -->
+<joint name="world_fixed" type="fixed">
+  <origin xyz="0 0 0" rpy="-1.5708 0 0"/>
+  <parent link="world"/>
+  <child link="base_link"/>
+</joint>
+
+  <link name="base_link">
+    <inertial>
+      <origin xyz="-0.0019960844905343 -0.0153377163207999 1.93060452762796E-07" rpy="0 0 0" />
+      <mass value="1.35067323377802" />
+      <inertia ixx="0.00197379180518826" ixy="-2.39949962417709E-05" ixz="-4.37708520775855E-10"
+               iyy="0.00359939253361497" iyz="-1.49420778344598E-10" izz="0.00215545898679393" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/visual/base_link.STL" />
+      </geometry>
+      <material name="falcon_orange"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/collision/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="link_1">
+    <inertial>
+      <origin xyz="-0.00620394458366335 0.00751730270504279 0.00967772822170036" rpy="0 0 0" />
+      <mass value="1.03065042921638" />
+      <inertia ixx="0.000473702442232536" ixy="4.78979397009768E-06" ixz="7.46275012376232E-05"
+               iyy="0.000598084004157016" iyz="-2.62259436207833E-05" izz="0.000586066353319823" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/visual/link_1.STL" />
+      </geometry>
+      <material name="falcon_blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/collision/link_1.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="link_2">
+    <inertial>
+      <origin xyz="0.00343704699093632 -0.0484533440120739 -0.00169296782221129" rpy="0 0 0" />
+      <mass value="0.43322422150071" />
+      <inertia ixx="0.000723130145208504" ixy="4.6714386780207E-05" ixz="-1.9951175089134E-06"
+               iyy="6.62295883530864E-05" iyz="1.51706818836744E-05" izz="0.0007621611625683" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/visual/link_2.STL" />
+      </geometry>
+      <material name="falcon_green"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/collision/link_2.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="link_3">
+    <inertial>
+      <origin xyz="0.0321836019015889 -0.00783285253165519 0.0208645676066189" rpy="0 0 0" />
+      <mass value="0.703739757969" />
+      <inertia ixx="0.000141078786527962" ixy="8.774359256817E-05" ixz="-5.61715136467105E-06"
+               iyy="0.000497859931087257" iyz="-3.06483915967249E-07" izz="0.000525999837211792" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/visual/link_3.STL" />
+      </geometry>
+      <material name="falcon_yellow"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/collision/link_3.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="link_4">
+    <inertial>
+      <origin xyz="0.0140180364394324 -0.00281389311320728 0.0105191248955689" rpy="0 0 0" />
+      <mass value="0.179553546620447" />
+      <inertia ixx="2.64090419843721E-05" ixy="3.18258793807896E-06" ixz="-6.22607142354255E-06"
+               iyy="4.12332119298094E-05" iyz="1.45356805791967E-07" izz="3.01227817618961E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/visual/link_4.STL" />
+      </geometry>
+      <material name="falcon_purple"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/collision/link_4.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="link_5">
+    <inertial>
+      <origin xyz="0.00544735994759318 0.0310241604159701 0.00424021692736841" rpy="0 0 0" />
+      <mass value="0.178973093548359" />
+      <inertia ixx="7.37572142902091E-05" ixy="-1.23054603956378E-05" ixz="-1.11952234366318E-06"
+               iyy="3.01336288473334E-05" iyz="-7.97323306909106E-06" izz="6.23974948195481E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/visual/link_5.STL" />
+      </geometry>
+      <material name="falcon_cyan"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/collision/link_5.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="gripper_link_1">
+    <inertial>
+      <origin xyz="0.0139328400746157 -0.0105060863672006 -0.0351215310829361" rpy="0 0 0" />
+      <mass value="0.0566110893029332" />
+      <inertia ixx="1.40520051854666E-05" ixy="1.40645161581947E-06" ixz="3.66393245597157E-06"
+               iyy="1.25400099347856E-05" iyz="-4.17437951258401E-06" izz="4.53311301231506E-06" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/visual/gripper_link_1.STL" />
+      </geometry>
+      <material name="falcon_red"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/collision/gripper_link_1.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="gripper_link_2">
+    <inertial>
+      <origin xyz="0.0384298599777133 0.00540363244949994 0.00761482545500121" rpy="0 0 0" />
+      <mass value="0.0571681364750211" />
+      <inertia ixx="2.94728992397961E-06" ixy="-2.05300547048327E-06" ixz="-3.83750536740406E-06"
+               iyy="1.41187090998331E-05" iyz="-7.84101517361656E-07" izz="1.41072271531774E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/visual/gripper_link_2.STL" />
+      </geometry>
+      <material name="falcon_red"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="$(arg mesh_path)/collision/gripper_link_2.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="joint_1" type="revolute">
+    <origin xyz="0 -0.0566999999999999 0" rpy="1.5707963267949 0 0" />
+    <parent link="base_link" />
+    <child link="link_1" />
+    <axis xyz="0 0 -1" />
+    <limit lower="-1.5708" upper="1.5708" effort="20" velocity="1" />
+  </joint>
+
+  <joint name="joint_2" type="revolute">
+    <origin xyz="-0.0137215131637984 -0.00641954359829768 0.0427800384078716" rpy="-1.5707963267949 0 0" />
+    <parent link="link_1" />
+    <child link="link_2" />
+    <axis xyz="-0.0303599450227944 0 0.999539030622723" />
+    <limit lower="-1.5708" upper="1.5708" effort="50" velocity="1" />
+    <dynamics damping="0.5" friction="0.0"/>
+  </joint>
+
+  <joint name="joint_3" type="revolute">
+    <origin xyz="0.00794095704254513 -0.112469753821526 0.000241198204225561" rpy="0 0 0" />
+    <parent link="link_2" />
+    <child link="link_3" />
+    <axis xyz="-0.0303599450227945 0 0.999539030622723" />
+    <limit lower="-1.5708" upper="1.5708" effort="30" velocity="1" />
+    <dynamics damping="0.3" friction="0.0"/>
+  </joint>
+
+  <joint name="joint_4" type="revolute">
+    <origin xyz="0.0973881872709224 -0.0162762521315378 0.0182651196721196" rpy="1.5707963267949 0 0.392699081698725" />
+    <parent link="link_3" />
+    <child link="link_4" />
+    <axis xyz="0.818727734388728 0.0296401954212068 0.573416389509484" />
+    <limit lower="-1.5708" upper="1.5708" effort="20" velocity="1" />
+  </joint>
+
+  <joint name="joint_5" type="revolute">
+    <origin xyz="0.0192684557070627 -0.0141614965142562 0.0178650813358514" rpy="-1.5707963267949 -0.392699081698725 0" />
+    <parent link="link_4" />
+    <child link="link_5" />
+    <axis xyz="-0.0223564735183862 -0.233891765016945 -0.972005571151256" />
+    <limit lower="-1.5708" upper="1.5708" effort="20" velocity="1" />
+  </joint>
+
+  <joint name="gripper_joint_1" type="revolute">
+    <origin xyz="0.015564 0.040832 0.0095921" rpy="1.5708 0 0.29671" />
+    <parent link="link_5" />
+    <child link="gripper_link_1" />
+    <axis xyz="-0.94301 0.012807 -0.33251" />
+    <limit lower="-0.7" upper="0" effort="10" velocity="1" />
+  </joint>
+
+  <joint name="gripper_joint_2" type="revolute">
+    <origin xyz="0.02075 0.034216 -0.016941" rpy="1.5043 0.28674 1.8224" />
+    <parent link="link_5" />
+    <child link="gripper_link_2" />
+    <axis xyz="-0.27417 -0.15762 0.94868" />
+    <mimic joint="gripper_joint_1" multiplier="1.0" offset="0.0"/>
+    <limit lower="-0.7" upper="0" effort="10" velocity="1" />
+  </joint>
+
+</robot>

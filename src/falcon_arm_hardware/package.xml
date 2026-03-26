@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>falcon_arm_hardware</name>
+  <version>0.0.1</version>
+  <description>Hardware interface plugin for Falcon Robot Arm STM32 control</description>
+  <maintainer email="ronirvin41148@gmail.com">ron</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- Build system dependency -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Core hardware interface dependencies -->
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  
+  <!-- Serial communication -->
+  <depend>serial</depend>
+  
+  <!-- ROS2 common data types -->
+  <depend>std_msgs</depend>
+  
+  <!-- Controller dependencies -->
+  <depend>controller_interface</depend>
+
+  <!-- Test dependencies -->
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <pluginlib plugin="${prefix}/falcon_arm_hardware_plugins.xml" />
+  </export>
+</package>

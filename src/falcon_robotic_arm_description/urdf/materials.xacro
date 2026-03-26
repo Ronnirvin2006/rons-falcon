@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!--
+  *****************************************************************************************
+  *  Filename:       materials.xacro
+  *  Description:    RViz2 material colour definitions for the Falcon Robotic Arm.
+  *                  Defines named RGBA materials for every link so RViz2 renders the
+  *                  robot with consistent brand colours across all launch configurations.
+  *
+  *                  Colour assignments:
+  *                    base_link      — falcon_orange   (0.95, 0.45, 0.05)
+  *                    link_1         — falcon_blue     (0.10, 0.40, 0.85)
+  *                    link_2         — falcon_green    (0.10, 0.72, 0.30)
+  *                    link_3         — falcon_yellow   (0.95, 0.80, 0.10)
+  *                    link_4         — falcon_purple   (0.55, 0.10, 0.82)
+  *                    link_5         — falcon_cyan     (0.05, 0.80, 0.85)
+  *                    gripper links  — falcon_red      (0.90, 0.10, 0.10)
+  *
+  *  Author:         BARGAVAN R - MIT
+  *  Co-Author:      RON NIRVIN J
+  *
+  *  Usage:
+  *    Included automatically by falcon_robotic_arm.xacro — do not include directly.
+  *  *****************************************************************************************
+-->
+<robot name="falcon_robotic_arm" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <material name="falcon_orange">
+    <color rgba="0.95 0.45 0.05 1.0"/>
+  </material>
+
+  <material name="falcon_blue">
+    <color rgba="0.10 0.40 0.85 1.0"/>
+  </material>
+
+  <material name="falcon_green">
+    <color rgba="0.10 0.72 0.30 1.0"/>
+  </material>
+
+  <material name="falcon_yellow">
+    <color rgba="0.95 0.80 0.10 1.0"/>
+  </material>
+
+  <material name="falcon_purple">
+    <color rgba="0.55 0.10 0.82 1.0"/>
+  </material>
+
+  <material name="falcon_cyan">
+    <color rgba="0.05 0.80 0.85 1.0"/>
+  </material>
+
+  <material name="falcon_red">
+    <color rgba="0.90 0.10 0.10 1.0"/>
+  </material>
+
+</robot>

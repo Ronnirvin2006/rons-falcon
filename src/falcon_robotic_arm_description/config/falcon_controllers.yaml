@@ -1,0 +1,114 @@
+# *****************************************************************************************
+# *  Filename:       falcon_controllers.yaml
+# *  Description:    ros2_control controller configuration for the Falcon Robotic Arm.
+# *                  Defines update rate, controller types, joint lists, command/state
+# *                  interfaces, velocity limits, constraints, and PID gains for:
+# *                    • joint_state_broadcaster  — publishes /joint_states
+# *                    • arm_controller           — JTC for joints 1–5
+# *                    • gripper_controller       — JTC for gripper_joint_1/2
+# *
+# *                  Key design decisions:
+# *                    open_loop_control: true       — bypasses state-feedback re-interpolation;
+# *                                                    prevents joints getting stuck at ±1.50 limits
+# *                    allow_nonzero_velocity_at_trajectory_end: true
+# *                                                  — required for streaming/teleop topic control
+# *                    velocity_limits 0.8 rad/s     — caps speed to prevent slider whiplash
+# *
+# *  Author:         BARGAVAN R - MIT
+# *  Co-Author:      RON NIRVIN J
+# *
+# *  Usage:
+# *    Loaded by controller_manager (Gazebo plugin or ros2_control_node).
+# *    Passed via <parameters> tag in falcon_robotic_arm.gazebo or bringup launch.
+# *****************************************************************************************
+
+controller_manager:
+  ros__parameters:
+    update_rate: 1000
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+arm_controller:
+  ros__parameters:
+    joints:
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+
+    command_interfaces:
+      - position
+
+    state_interfaces:
+      - position
+      - velocity
+
+    # Must be true for streaming/teleop topic control.
+    # false forces the controller to demand zero velocity at every waypoint,
+    # which causes it to reject or stall on rapid continuous commands.
+    allow_nonzero_velocity_at_trajectory_end: true
+
+    # Direct position command — bypasses state-feedback re-interpolation.
+    # Prevents joints from getting trapped at the ±1.50 soft limit boundary.
+    open_loop_control: true
+
+    # Cap joint speed at 0.8 rad/s (URDF hard limit is 1.0 rad/s).
+    # Prevents fast slider sweeps from driving joints at full speed.
+    velocity_limits:
+      joint_1: { max_velocity: 0.8 }
+      joint_2: { max_velocity: 0.8 }
+      joint_3: { max_velocity: 0.8 }
+      joint_4: { max_velocity: 0.8 }
+      joint_5: { max_velocity: 0.8 }
+
+    # Generous tolerances so the controller never aborts mid-teleop
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.0        # 0 = no timeout on goal completion
+      joint_1: { goal: 0.1 }
+      joint_2: { goal: 0.1 }
+      joint_3: { goal: 0.1 }
+      joint_4: { goal: 0.1 }
+      joint_5: { goal: 0.1 }
+
+    gains:
+      joint_1: { p: 100.0, i: 0.01, d: 10.0 }
+      joint_2: { p: 100.0, i: 0.01, d: 10.0 }
+      joint_3: { p: 100.0, i: 0.01, d: 10.0 }
+      joint_4: { p: 100.0, i: 0.01, d: 10.0 }
+      joint_5: { p: 100.0, i: 0.01, d: 10.0 }
+
+
+gripper_controller:
+  ros__parameters:
+    joints:
+      - gripper_joint_1
+      - gripper_joint_2
+
+    command_interfaces:
+      - position
+
+    state_interfaces:
+      - position
+      - velocity
+
+    allow_nonzero_velocity_at_trajectory_end: true
+
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.0
+      gripper_joint_1: { goal: 0.1 }
+      gripper_joint_2: { goal: 0.1 }
+
+    gains:
+      gripper_joint_1: { p: 100.0, i: 0.01, d: 10.0 }
+      gripper_joint_2: { p: 100.0, i: 0.01, d: 10.0 }

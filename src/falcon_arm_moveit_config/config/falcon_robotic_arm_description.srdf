@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--This does not replace URDF, and is not an extension of URDF.
+    This is a format for representing semantic information about the robot structure.
+    A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined
+-->
+<robot name="falcon_robotic_arm_description">
+
+  <!--GROUPS-->
+  <group name="falcon_arm">
+    <joint name="joint_1"/>
+    <joint name="joint_2"/>
+    <joint name="joint_3"/>
+    <joint name="joint_4"/>
+    <joint name="joint_5"/>
+  </group>
+
+  <group name="falcon_gripper">
+    <joint name="gripper_joint_1"/>
+  </group>
+
+  <!--GROUP STATES-->
+  <group_state name="home" group="falcon_arm">
+    <joint name="joint_1" value="0"/>
+    <joint name="joint_2" value="0"/>
+    <joint name="joint_3" value="0"/>
+    <joint name="joint_4" value="0"/>
+    <joint name="joint_5" value="0"/>
+  </group_state>
+
+  <group_state name="ready" group="falcon_arm">
+    <joint name="joint_1" value="-0.5988"/>
+    <joint name="joint_2" value="-0.3905"/>
+    <joint name="joint_3" value="-0.1996"/>
+    <joint name="joint_4" value="0.4252"/>
+    <joint name="joint_5" value="0.1996"/>
+  </group_state>
+
+  <group_state name="open" group="falcon_gripper">
+    <joint name="gripper_joint_1" value="0"/>
+  </group_state>
+
+  <group_state name="closed" group="falcon_gripper">
+    <joint name="gripper_joint_1" value="-0.7"/>
+  </group_state>
+
+  <!--END EFFECTOR-->
+  <end_effector name="gripper" parent_link="link_5" group="falcon_gripper" parent_group="falcon_arm"/>
+
+  <!--VIRTUAL JOINT INTENTIONALLY OMITTED:
+      The URDF already defines a 'world' link connected to base_link via a fixed joint.
+      Adding a virtual_joint with parent_frame="world" and child_link="world" causes
+      static_transform_publisher to crash because child_frame_id == frame_id. -->
+
+  <!--PASSIVE JOINT: gripper_joint_2 is driven by the gear mate (mimic) of gripper_joint_1.
+      The <mimic> tag in falcon_robotic_arm.xacro is the authoritative declaration.
+      This entry tells MoveIt not to plan for gripper_joint_2 independently. -->
+  <passive_joint name="gripper_joint_2"/>
+
+  <!--DISABLE COLLISIONS-->
+  <!-- Adjacent links — collision checking always disabled -->
+  <disable_collisions link1="base_link"      link2="link_1"         reason="Adjacent"/>
+  <disable_collisions link1="link_1"         link2="link_2"         reason="Adjacent"/>
+  <disable_collisions link1="link_2"         link2="link_3"         reason="Adjacent"/>
+  <disable_collisions link1="link_3"         link2="link_4"         reason="Adjacent"/>
+  <disable_collisions link1="link_4"         link2="link_5"         reason="Adjacent"/>
+  <disable_collisions link1="gripper_link_1" link2="link_5"         reason="Adjacent"/>
+  <disable_collisions link1="gripper_link_2" link2="link_5"         reason="Adjacent"/>
+  <!-- Gear-mated gripper fingers move together and never collide -->
+  <disable_collisions link1="gripper_link_1" link2="gripper_link_2" reason="Adjacent"/>
+  <!-- Geometrically unreachable pairs for this kinematic chain -->
+  <disable_collisions link1="base_link"      link2="link_2"         reason="Never"/>
+  <disable_collisions link1="base_link"      link2="link_3"         reason="Never"/>
+  <disable_collisions link1="link_1"         link2="link_3"         reason="Never"/>
+  <disable_collisions link1="link_1"         link2="link_4"         reason="Never"/>
+  <disable_collisions link1="link_2"         link2="link_4"         reason="Never"/>
+  <disable_collisions link1="link_2"         link2="link_5"         reason="Never"/>
+  <disable_collisions link1="link_3"         link2="link_5"         reason="Never"/>
+  <disable_collisions link1="link_3"         link2="gripper_link_1" reason="Never"/>
+  <disable_collisions link1="link_3"         link2="gripper_link_2" reason="Never"/>
+  <disable_collisions link1="link_4"         link2="gripper_link_1" reason="Never"/>
+  <disable_collisions link1="link_4"         link2="gripper_link_2" reason="Never"/>
+
+</robot>

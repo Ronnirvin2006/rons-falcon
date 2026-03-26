@@ -1,0 +1,272 @@
+<?xml version="1.0"?>
+<!--
+  *****************************************************************************************
+  *  Filename:       example_ros2_control_config.xacro
+  *  Description:    Reference/example ros2_control configuration for the Falcon Arm
+  *                  hardware interface.  Shows how to wire the FalconArmHardwareInterface
+  *                  plugin to joint command/state interfaces and configure all three
+  *                  controllers (joint_state_broadcaster, arm_controller,
+  *                  gripper_controller).
+  *
+  *                  THIS IS A REFERENCE FILE — not used in the active robot description.
+  *                  The production configuration lives in:
+  *                    falcon_robotic_arm_description/urdf/falcon_robotic_arm.ros2control.xacro
+  *
+  *  Author:         BARGAVAN R - MIT
+  *  Co-Author:      RON NIRVIN J
+  *
+  *  Usage:
+  *    For documentation / onboarding reference only.
+  *    Copy relevant sections into your own robot description if needed.
+  *  *****************************************************************************************
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ====================================================================== -->
+  <!-- ROS2 CONTROL SYSTEM CONFIGURATION                                    -->
+  <!-- ====================================================================== -->
+  <ros2_control name="FalconArmSystem" type="system">
+    
+    <!-- ================================================================== -->
+    <!-- HARDWARE CONFIGURATION                                           -->
+    <!-- This section defines which hardware interface plugin to use      -->
+    <!-- ================================================================== -->
+    <hardware>
+      <!-- Use the Falcon Arm Hardware Interface plugin for STM32 control -->
+      <plugin>falcon_arm_hardware/FalconArmHardwareInterface</plugin>
+      
+      <!-- Serial port configuration parameter -->
+      <!-- Default: /dev/ttyACM0 (typical for STM32 Nucleo on Linux)     -->
+      <!-- Can be overridden via URDF xacro argument: serial_port:=/dev/ttyUSB0 -->
+      <param name="serial_port">/dev/ttyACM0</param>
+      
+      <!-- Baud rate configuration parameter -->
+      <!-- Must match the baud rate in STM32 firmware (115200 baud)      -->
+      <param name="baud_rate">115200</param>
+    </hardware>
+
+    <!-- ================================================================== -->
+    <!-- JOINT 1 CONFIGURATION                                            -->
+    <!-- First arm joint (base rotation)                                 -->
+    <!-- ================================================================== -->
+    <joint name="joint_1">
+      <!-- Command interface: receive position commands in radians -->
+      <command_interface name="position">
+        <!-- Minimum joint position (radians) -->
+        <param name="min">-3.14159</param>
+        <!-- Maximum joint position (radians) -->
+        <param name="max">3.14159</param>
+      </command_interface>
+      
+      <!-- State interface: provide current position feedback in radians -->
+      <state_interface name="position"/>
+      
+      <!-- State interface: provide current velocity feedback in radians/second -->
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- ================================================================== -->
+    <!-- JOINT 2 CONFIGURATION                                            -->
+    <!-- Second arm joint (shoulder vertical)                           -->
+    <!-- ================================================================== -->
+    <joint name="joint_2">
+      <command_interface name="position">
+        <param name="min">-3.14159</param>
+        <param name="max">3.14159</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- ================================================================== -->
+    <!-- JOINT 3 CONFIGURATION                                            -->
+    <!-- Third arm joint (elbow)                                        -->
+    <!-- ================================================================== -->
+    <joint name="joint_3">
+      <command_interface name="position">
+        <param name="min">-3.14159</param>
+        <param name="max">3.14159</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- ================================================================== -->
+    <!-- JOINT 4 CONFIGURATION                                            -->
+    <!-- Fourth arm joint (wrist pitch)                                 -->
+    <!-- ================================================================== -->
+    <joint name="joint_4">
+      <command_interface name="position">
+        <param name="min">-3.14159</param>
+        <param name="max">3.14159</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- ================================================================== -->
+    <!-- JOINT 5 CONFIGURATION                                            -->
+    <!-- Fifth arm joint (wrist roll)                                   -->
+    <!-- ================================================================== -->
+    <joint name="joint_5">
+      <command_interface name="position">
+        <param name="min">-3.14159</param>
+        <param name="max">3.14159</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- ================================================================== -->
+    <!-- JOINT 6 CONFIGURATION                                            -->
+    <!-- Gripper servo joint                                            -->
+    <!-- ================================================================== -->
+    <joint name="joint_6">
+      <!-- Gripper typically has more limited range than arm joints -->
+      <command_interface name="position">
+        <param name="min">0.0</param>
+        <param name="max">1.57</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+  </ros2_control>
+
+  <!-- ====================================================================== -->
+  <!-- CONTROLLER CONFIGURATION                                             -->
+  <!-- This section defines how controllers interact with the hardware     -->
+  <!-- ====================================================================== -->
+  
+  <!-- ================================================================== -->
+  <!-- CONTROLLER MANAGER CONFIGURATION                                 -->
+  <!-- Manages all controllers and their update rates                   -->
+  <!-- ================================================================== -->
+  <ros2_control:controller_manager>
+    <ros__parameters>
+      <!-- Update rate for all controllers (Hz) -->
+      <!-- 100 Hz = read/write cycle every 10 milliseconds -->
+      <param name="update_rate">100</param>
+
+      <!-- ============================================================= -->
+      <!-- JOINT STATE BROADCASTER CONTROLLER                           -->
+      <!-- Publishes /joint_states topic with current joint positions  -->
+      <!-- ============================================================= -->
+      <param name="joint_state_broadcaster/type">joint_state_broadcaster/JointStateBroadcaster</param>
+
+      <!-- ============================================================= -->
+      <!-- ARM LINK CONTROLLER                                          -->
+      <!-- Executes joint trajectories for arm (5 joints)              -->
+      <!-- ============================================================= -->
+      <param name="arm_controller/type">joint_trajectory_controller/JointTrajectoryController</param>
+
+      <!-- ============================================================= -->
+      <!-- GRIPPER CONTROLLER                                           -->
+      <!-- Executes position commands for gripper (1 joint)           -->
+      <!-- ============================================================= -->
+      <param name="gripper_controller/type">position_controllers/GripperActionController</param>
+    </ros__parameters>
+  </ros2_control:controller_manager>
+
+  <!-- ================================================================== -->
+  <!-- ARM LINK CONTROLLER PARAMETERS                                    -->
+  <!-- Controls 5 arm joints with trajectory execution                  -->
+  <!-- ================================================================== -->
+  <arm_controller>
+    <ros__parameters>
+      <!-- List of joints controlled by this controller (5 arm joints) -->
+      <param name="joints" type="yaml">
+        - joint_1
+        - joint_2
+        - joint_3
+        - joint_4
+        - joint_5
+      </param>
+
+      <!-- Command interfaces this controller uses -->
+      <!-- joint_trajectory_controller sends position commands -->
+      <param name="command_interfaces" type="yaml">
+        - position
+      </param>
+
+      <!-- State interfaces this controller reads -->
+      <!-- Reads both position and velocity for monitoring trajectory execution -->
+      <param name="state_interfaces" type="yaml">
+        - position
+        - velocity
+      </param>
+
+      <!-- Rate at which to publish the current joint state (Hz) -->
+      <!-- Lower rate saves bandwidth, higher rate improves responsiveness -->
+      <param name="state_publish_rate">50.0</param>
+
+      <!-- Rate at which to monitor action goal execution (Hz) -->
+      <!-- Checks if trajectory is being followed correctly -->
+      <param name="action_monitor_rate">20.0</param>
+
+      <!-- Allow partial joint goals (not all 5 joints in trajectory) -->
+      <!-- False = all 5 joints must be specified in goal-->
+      <param name="allow_partial_joints_goal">false</param>
+
+      <!-- Allow integration of velocities in goal trajectories -->
+      <!-- Useful if trajectory contains velocity commands -->
+      <param name="allow_integration_in_goal_trajectories">true</param>
+
+      <!-- Trajectory execution constraints -->
+      <param name="constraints">
+        <!-- Velocity tolerance when trajectory ends (rad/s) -->
+        <!-- Must be below this to consider motion stopped -->
+        <param name="stopped_velocity_tolerance">0.01</param>
+        
+        <!-- Maximum time allowed for trajectory execution (seconds) -->
+        <!-- 0.0 means unlimited time -->
+        <param name="goal_time">0.0</param>
+      </param>
+    </ros__parameters>
+  </arm_controller>
+
+  <!-- ================================================================== -->
+  <!-- GRIPPER CONTROLLER PARAMETERS                                     -->
+  <!-- Controls 1 gripper servo with GripperCommand action interface    -->
+  <!-- ================================================================== -->
+  <gripper_controller>
+    <ros__parameters>
+      <!-- Joint name controlled by this gripper controller -->
+      <param name="joint">joint_6</param>
+
+      <!-- Rate at which to monitor gripper command execution (Hz) -->
+      <param name="action_monitor_rate">20.0</param>
+
+      <!-- Maximum effort the gripper can apply (Nm or relevant unit) -->
+      <!-- Limits the torque to protect objects from crushing -->
+      <param name="max_effort">100.0</param>
+
+      <!-- Allow the gripper to stall (stop moving when blocked) -->
+      <!-- False = gripper must reach goal position exactly -->
+      <param name="allow_stalling">false</param>
+
+      <!-- Velocity threshold below which gripper is considered stalled (rad/s) -->
+      <!-- If velocity stays below this for stall_timeout, gripper is stalled -->
+      <param name="stall_velocity_threshold">0.001</param>
+
+      <!-- Time threshold for stall detection (seconds) -->
+      <!-- If velocity stays below threshold for this long, gripper is stalled -->
+      <param name="stall_timeout">1.0</param>
+    </ros__parameters>
+  </gripper_controller>
+
+  <!-- ================================================================== -->
+  <!-- JOINT STATE BROADCASTER PARAMETERS                               -->
+  <!-- Publishes computed joint states from all interfaces             -->
+  <!-- ================================================================== -->
+  <joint_state_broadcaster>
+    <ros__parameters>
+      <!-- Extra joints to include (not in the hardware interface) -->
+      <!-- Leave empty for standard 6-joint arm -->
+      <param name="extra_joints" type="yaml">
+        []
+      </param>
+    </ros__parameters>
+  </joint_state_broadcaster>
+
+</robot>

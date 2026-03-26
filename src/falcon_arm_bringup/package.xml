@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>falcon_arm_bringup</name>
+  <version>0.0.1</version>
+  <description>Launch and configuration files for Falcon Robot Arm hardware interface and controllers</description>
+  <maintainer email="bargavanroboticsengineer@gmail.com">bargavan</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- Author information -->
+  <author email="bargavanroboticsengineer@gmail.com">bargavan</author>
+
+  <!-- Build tool -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Core dependencies -->
+  <depend>rclcpp</depend>
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  
+  <!-- Hardware and control -->
+  <depend>hardware_interface</depend>
+  <depend>controller_manager</depend>
+  <depend>controller_interface</depend>
+  <depend>joint_trajectory_controller</depend>
+  <depend>joint_state_broadcaster</depend>
+  <depend>position_controllers</depend>
+  
+  <!-- Message types -->
+  <depend>sensor_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>control_msgs</depend>
+  <depend>geometry_msgs</depend>
+  
+  <!-- Robot description -->
+  <depend>falcon_robotic_arm_description</depend>
+  <depend>falcon_arm_hardware</depend>
+  
+  <!-- Robot state publisher -->
+  <depend>robot_state_publisher</depend>
+  
+  <!-- Test dependencies -->
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

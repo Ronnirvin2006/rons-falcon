@@ -1,0 +1,765 @@
+<?xml version="1.0"?>
+<sdf version="1.8">
+  <world name="falcon_arm_world">
+
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin filename="gz-sim-physics-system"         name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system"   name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+
+    <!-- =====================================================================
+         LIGHTING  -  sun + warm overhead + cool side fill
+         ===================================================================== -->
+
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.85 0.85 0.85 1</diffuse>
+      <specular>0.30 0.30 0.30 1</specular>
+      <direction>-0.4 0.1 -0.9</direction>
+      <attenuation><range>1000</range><constant>0.9</constant><linear>0.01</linear><quadratic>0.001</quadratic></attenuation>
+    </light>
+
+    <light name="overhead_warm" type="point">
+      <pose>-0.2 0 2.4 0 0 0</pose>
+      <diffuse>1.0 0.95 0.80 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <attenuation><range>8</range><constant>0.3</constant><linear>0.06</linear><quadratic>0.01</quadratic></attenuation>
+      <cast_shadows>false</cast_shadows>
+    </light>
+
+    <light name="side_fill_cool" type="point">
+      <pose>1.8 -1.5 2.0 0 0 0</pose>
+      <diffuse>0.75 0.85 1.0 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
+      <attenuation><range>6</range><constant>0.4</constant><linear>0.08</linear><quadratic>0.02</quadratic></attenuation>
+      <cast_shadows>false</cast_shadows>
+    </light>
+
+    <!-- =====================================================================
+         FLOOR  -  dark epoxy concrete
+         ===================================================================== -->
+
+    <model name="floor">
+      <static>true</static>
+      <link name="link">
+        <collision name="col">
+          <geometry><plane><normal>0 0 1</normal><size>12 12</size></plane></geometry>
+        </collision>
+        <visual name="vis">
+          <geometry><plane><normal>0 0 1</normal><size>12 12</size></plane></geometry>
+          <material>
+            <ambient>0.38 0.38 0.40 1</ambient>
+            <diffuse>0.46 0.46 0.48 1</diffuse>
+            <specular>0.20 0.20 0.20 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Safety zone outer ring (yellow disc) -->
+    <model name="safety_ring_outer">
+      <static>true</static>
+      <pose>0 0 0.002 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>1.30</radius><length>0.003</length></cylinder></geometry>
+          <material>
+            <ambient>0.95 0.80 0.00 1</ambient>
+            <diffuse>1.00 0.85 0.00 1</diffuse>
+            <specular>0.15 0.15 0.05 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Safety zone inner ring (floor colour, makes ring appear hollow) -->
+    <model name="safety_ring_inner">
+      <static>true</static>
+      <pose>0 0 0.003 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>1.18</radius><length>0.003</length></cylinder></geometry>
+          <material>
+            <ambient>0.38 0.38 0.40 1</ambient>
+            <diffuse>0.46 0.46 0.48 1</diffuse>
+            <specular>0.10 0.10 0.10 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- =====================================================================
+         ROOM WALLS  -  cream lab finish, 3-sided (open toward viewer)
+         ===================================================================== -->
+
+    <model name="wall_back">
+      <static>true</static>
+      <pose>3.0 0 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.10 7 3</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.10 7 3</size></box></geometry>
+          <material>
+            <ambient>0.87 0.87 0.84 1</ambient>
+            <diffuse>0.93 0.93 0.90 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_left">
+      <static>true</static>
+      <pose>0 2.8 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>6 0.10 3</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>6 0.10 3</size></box></geometry>
+          <material>
+            <ambient>0.87 0.87 0.84 1</ambient>
+            <diffuse>0.93 0.93 0.90 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_right">
+      <static>true</static>
+      <pose>0 -2.8 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>6 0.10 3</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>6 0.10 3</size></box></geometry>
+          <material>
+            <ambient>0.87 0.87 0.84 1</ambient>
+            <diffuse>0.93 0.93 0.90 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Wall baseboard stripe (dark) -->
+    <model name="baseboard_back">
+      <static>true</static>
+      <pose>2.95 0 0.06 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.05 7 0.12</size></box></geometry>
+          <material>
+            <ambient>0.18 0.18 0.18 1</ambient>
+            <diffuse>0.22 0.22 0.22 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- =====================================================================
+         OVERHEAD LIGHT FIXTURE  -  hanging panel above workbench
+         ===================================================================== -->
+
+    <model name="light_fixture_bar">
+      <static>true</static>
+      <pose>0 0 2.8 0 0 0</pose>
+      <link name="link">
+        <visual name="vis_housing">
+          <geometry><box><size>0.80 0.18 0.06</size></box></geometry>
+          <material>
+            <ambient>0.25 0.25 0.25 1</ambient>
+            <diffuse>0.30 0.30 0.30 1</diffuse>
+            <specular>0.50 0.50 0.50 1</specular>
+          </material>
+        </visual>
+        <visual name="vis_panel">
+          <pose>0 0 -0.032 0 0 0</pose>
+          <geometry><box><size>0.74 0.12 0.005</size></box></geometry>
+          <material>
+            <ambient>0.98 0.98 0.95 1</ambient>
+            <diffuse>1.00 1.00 0.97 1</diffuse>
+            <specular>1.00 1.00 1.00 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Suspension cables -->
+    <model name="cable_l">
+      <static>true</static>
+      <pose>0 0.08 2.9 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>0.005</radius><length>0.20</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.25 0.25 0.25 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="cable_r">
+      <static>true</static>
+      <pose>0 -0.08 2.9 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><cylinder><radius>0.005</radius><length>0.20</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.25 0.25 0.25 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- =====================================================================
+         WORKBENCH  -  industrial steel top, dark frame + under-shelf
+         Robot base sits at z=0.77 m (table top surface at z=0.755 m)
+         ===================================================================== -->
+
+    <model name="workbench">
+      <static>true</static>
+      <pose>0 0 0 0 0 0</pose>
+
+      <link name="table_top">
+        <pose>0 0 0.740 0 0 0</pose>
+        <collision name="col">
+          <geometry><box><size>0.90 0.65 0.030</size></box></geometry>
+          <surface><friction><ode><mu>0.9</mu><mu2>0.9</mu2></ode></friction></surface>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.90 0.65 0.030</size></box></geometry>
+          <material>
+            <ambient>0.52 0.52 0.55 1</ambient>
+            <diffuse>0.62 0.62 0.65 1</diffuse>
+            <specular>0.70 0.70 0.70 1</specular>
+          </material>
+        </visual>
+      </link>
+
+      <!-- Front apron -->
+      <link name="apron_front">
+        <pose>0 -0.315 0.670 0 0 0</pose>
+        <visual name="vis">
+          <geometry><box><size>0.86 0.025 0.14</size></box></geometry>
+          <material>
+            <ambient>0.25 0.25 0.28 1</ambient>
+            <diffuse>0.30 0.30 0.33 1</diffuse>
+            <specular>0.55 0.55 0.55 1</specular>
+          </material>
+        </visual>
+      </link>
+
+      <!-- Back apron -->
+      <link name="apron_back">
+        <pose>0 0.315 0.670 0 0 0</pose>
+        <visual name="vis">
+          <geometry><box><size>0.86 0.025 0.14</size></box></geometry>
+          <material>
+            <ambient>0.25 0.25 0.28 1</ambient>
+            <diffuse>0.30 0.30 0.33 1</diffuse>
+            <specular>0.55 0.55 0.55 1</specular>
+          </material>
+        </visual>
+      </link>
+
+      <!-- 4 legs (charcoal) -->
+      <link name="leg_fl">
+        <pose>0.41 -0.28 0.3625 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.05 0.05 0.725</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.05 0.05 0.725</size></box></geometry>
+          <material><ambient>0.14 0.14 0.14 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse><specular>0.50 0.50 0.50 1</specular></material>
+        </visual>
+      </link>
+      <link name="leg_fr">
+        <pose>0.41 0.28 0.3625 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.05 0.05 0.725</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.05 0.05 0.725</size></box></geometry>
+          <material><ambient>0.14 0.14 0.14 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse><specular>0.50 0.50 0.50 1</specular></material>
+        </visual>
+      </link>
+      <link name="leg_bl">
+        <pose>-0.41 -0.28 0.3625 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.05 0.05 0.725</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.05 0.05 0.725</size></box></geometry>
+          <material><ambient>0.14 0.14 0.14 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse><specular>0.50 0.50 0.50 1</specular></material>
+        </visual>
+      </link>
+      <link name="leg_br">
+        <pose>-0.41 0.28 0.3625 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.05 0.05 0.725</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.05 0.05 0.725</size></box></geometry>
+          <material><ambient>0.14 0.14 0.14 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse><specular>0.50 0.50 0.50 1</specular></material>
+        </visual>
+      </link>
+
+      <!-- Under-shelf -->
+      <link name="shelf">
+        <pose>0 0 0.36 0 0 0</pose>
+        <visual name="vis">
+          <geometry><box><size>0.80 0.55 0.018</size></box></geometry>
+          <material><ambient>0.25 0.25 0.28 1</ambient><diffuse>0.30 0.30 0.33 1</diffuse><specular>0.40 0.40 0.40 1</specular></material>
+        </visual>
+      </link>
+
+      <!-- Cross brace front-back -->
+      <link name="brace_l">
+        <pose>0 -0.265 0.18 0 0 0</pose>
+        <visual name="vis">
+          <geometry><box><size>0.82 0.02 0.02</size></box></geometry>
+          <material><ambient>0.14 0.14 0.14 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse><specular>0.50 0.50 0.50 1</specular></material>
+        </visual>
+      </link>
+      <link name="brace_r">
+        <pose>0 0.265 0.18 0 0 0</pose>
+        <visual name="vis">
+          <geometry><box><size>0.82 0.02 0.02</size></box></geometry>
+          <material><ambient>0.14 0.14 0.14 1</ambient><diffuse>0.18 0.18 0.18 1</diffuse><specular>0.50 0.50 0.50 1</specular></material>
+        </visual>
+      </link>
+
+      <joint name="j_fl"  type="fixed"><parent>table_top</parent><child>leg_fl</child></joint>
+      <joint name="j_fr"  type="fixed"><parent>table_top</parent><child>leg_fr</child></joint>
+      <joint name="j_bl"  type="fixed"><parent>table_top</parent><child>leg_bl</child></joint>
+      <joint name="j_br"  type="fixed"><parent>table_top</parent><child>leg_br</child></joint>
+      <joint name="j_af"  type="fixed"><parent>table_top</parent><child>apron_front</child></joint>
+      <joint name="j_ab"  type="fixed"><parent>table_top</parent><child>apron_back</child></joint>
+      <joint name="j_sh"  type="fixed"><parent>table_top</parent><child>shelf</child></joint>
+      <joint name="j_bl2" type="fixed"><parent>table_top</parent><child>brace_l</child></joint>
+      <joint name="j_br2" type="fixed"><parent>table_top</parent><child>brace_r</child></joint>
+    </model>
+
+    <!-- =====================================================================
+         SOURCE TRAY  -  matte black tray holding pick objects
+         Sits on the workbench in front of the robot (robot faces -X)
+         ===================================================================== -->
+
+    <model name="source_tray">
+      <static>true</static>
+      <pose>-0.17 0 0.769 0 0 0</pose>
+      <link name="base">
+        <collision name="col"><geometry><box><size>0.22 0.28 0.008</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.22 0.28 0.008</size></box></geometry>
+          <material><ambient>0.08 0.08 0.08 1</ambient><diffuse>0.10 0.10 0.10 1</diffuse><specular>0.40 0.40 0.40 1</specular></material>
+        </visual>
+      </link>
+      <!-- Tray rim - front -->
+      <link name="rim_f">
+        <pose>0 -0.145 0.010 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>0.22 0.010 0.012</size></box></geometry>
+          <material><ambient>0.08 0.08 0.08 1</ambient><diffuse>0.10 0.10 0.10 1</diffuse><specular>0.40 0.40 0.40 1</specular></material>
+        </visual>
+      </link>
+      <link name="rim_b">
+        <pose>0 0.145 0.010 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>0.22 0.010 0.012</size></box></geometry>
+          <material><ambient>0.08 0.08 0.08 1</ambient><diffuse>0.10 0.10 0.10 1</diffuse><specular>0.40 0.40 0.40 1</specular></material>
+        </visual>
+      </link>
+      <link name="rim_l">
+        <pose>-0.115 0 0.010 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>0.010 0.28 0.012</size></box></geometry>
+          <material><ambient>0.08 0.08 0.08 1</ambient><diffuse>0.10 0.10 0.10 1</diffuse><specular>0.40 0.40 0.40 1</specular></material>
+        </visual>
+      </link>
+      <link name="rim_r">
+        <pose>0.115 0 0.010 0 0 0</pose>
+        <visual name="vis"><geometry><box><size>0.010 0.28 0.012</size></box></geometry>
+          <material><ambient>0.08 0.08 0.08 1</ambient><diffuse>0.10 0.10 0.10 1</diffuse><specular>0.40 0.40 0.40 1</specular></material>
+        </visual>
+      </link>
+      <joint name="j_rf" type="fixed"><parent>base</parent><child>rim_f</child></joint>
+      <joint name="j_rb" type="fixed"><parent>base</parent><child>rim_b</child></joint>
+      <joint name="j_rl" type="fixed"><parent>base</parent><child>rim_l</child></joint>
+      <joint name="j_rr" type="fixed"><parent>base</parent><child>rim_r</child></joint>
+    </model>
+
+    <!-- =====================================================================
+         TARGET DROP ZONES  -  coloured laser-etched pads on table
+         ===================================================================== -->
+
+    <model name="pad_red">
+      <static>true</static>
+      <pose>-0.35 0.16 0.758 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.07 0.07 0.004</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.07 0.07 0.004</size></box></geometry>
+          <material><ambient>0.80 0.04 0.04 1</ambient><diffuse>0.95 0.05 0.05 1</diffuse><specular>0.40 0.40 0.40 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="pad_green">
+      <static>true</static>
+      <pose>-0.35 0.00 0.758 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.07 0.07 0.004</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.07 0.07 0.004</size></box></geometry>
+          <material><ambient>0.04 0.70 0.04 1</ambient><diffuse>0.05 0.85 0.05 1</diffuse><specular>0.40 0.40 0.40 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="pad_blue">
+      <static>true</static>
+      <pose>-0.35 -0.16 0.758 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.07 0.07 0.004</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.07 0.07 0.004</size></box></geometry>
+          <material><ambient>0.04 0.04 0.80 1</ambient><diffuse>0.05 0.05 0.95 1</diffuse><specular>0.40 0.40 0.40 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- =====================================================================
+         PICK-AND-PLACE BLOCKS  -  35mm cubes on source tray, physics on
+         ===================================================================== -->
+
+    <model name="block_red">
+      <static>false</static>
+      <pose>-0.17 0.09 0.800 0 0 0</pose>
+      <link name="link">
+        <inertial><mass>0.05</mass><inertia><ixx>1.04e-5</ixx><iyy>1.04e-5</iyy><izz>1.04e-5</izz></inertia></inertial>
+        <collision name="col">
+          <geometry><box><size>0.035 0.035 0.035</size></box></geometry>
+          <surface><friction><ode><mu>0.7</mu><mu2>0.7</mu2></ode></friction></surface>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.035 0.035 0.035</size></box></geometry>
+          <material><ambient>0.85 0.06 0.06 1</ambient><diffuse>1.00 0.08 0.08 1</diffuse><specular>0.70 0.70 0.70 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="block_green">
+      <static>false</static>
+      <pose>-0.17 0.00 0.800 0 0 0</pose>
+      <link name="link">
+        <inertial><mass>0.05</mass><inertia><ixx>1.04e-5</ixx><iyy>1.04e-5</iyy><izz>1.04e-5</izz></inertia></inertial>
+        <collision name="col">
+          <geometry><box><size>0.035 0.035 0.035</size></box></geometry>
+          <surface><friction><ode><mu>0.7</mu><mu2>0.7</mu2></ode></friction></surface>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.035 0.035 0.035</size></box></geometry>
+          <material><ambient>0.06 0.75 0.06 1</ambient><diffuse>0.08 0.90 0.08 1</diffuse><specular>0.70 0.70 0.70 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="block_blue">
+      <static>false</static>
+      <pose>-0.17 -0.09 0.800 0 0 0</pose>
+      <link name="link">
+        <inertial><mass>0.05</mass><inertia><ixx>1.04e-5</ixx><iyy>1.04e-5</iyy><izz>1.04e-5</izz></inertia></inertial>
+        <collision name="col">
+          <geometry><box><size>0.035 0.035 0.035</size></box></geometry>
+          <surface><friction><ode><mu>0.7</mu><mu2>0.7</mu2></ode></friction></surface>
+        </collision>
+        <visual name="vis">
+          <geometry><box><size>0.035 0.035 0.035</size></box></geometry>
+          <material><ambient>0.06 0.06 0.85 1</ambient><diffuse>0.08 0.08 1.00 1</diffuse><specular>0.70 0.70 0.70 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- =====================================================================
+         SAFETY FENCE  -  6 yellow posts + orange horizontal rails
+         Rectangular perimeter around the workbench.
+         Front side (x=-1.0) has a 0.5m access gap at centre for operator.
+         ===================================================================== -->
+
+    <model name="post_fl"><static>true</static><pose>1.05 -0.90 0.62 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><cylinder><radius>0.025</radius><length>1.24</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.025</radius><length>1.24</length></cylinder></geometry>
+          <material><ambient>0.90 0.75 0.00 1</ambient><diffuse>1.00 0.85 0.00 1</diffuse><specular>0.45 0.40 0.10 1</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="post_fr"><static>true</static><pose>1.05 0.90 0.62 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><cylinder><radius>0.025</radius><length>1.24</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.025</radius><length>1.24</length></cylinder></geometry>
+          <material><ambient>0.90 0.75 0.00 1</ambient><diffuse>1.00 0.85 0.00 1</diffuse><specular>0.45 0.40 0.10 1</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="post_ml"><static>true</static><pose>0 -0.90 0.62 0 0 0</pose>
+      <link name="link">
+        <visual name="vis"><geometry><cylinder><radius>0.025</radius><length>1.24</length></cylinder></geometry>
+          <material><ambient>0.90 0.75 0.00 1</ambient><diffuse>1.00 0.85 0.00 1</diffuse><specular>0.45 0.40 0.10 1</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="post_mr"><static>true</static><pose>0 0.90 0.62 0 0 0</pose>
+      <link name="link">
+        <visual name="vis"><geometry><cylinder><radius>0.025</radius><length>1.24</length></cylinder></geometry>
+          <material><ambient>0.90 0.75 0.00 1</ambient><diffuse>1.00 0.85 0.00 1</diffuse><specular>0.45 0.40 0.10 1</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="post_bl"><static>true</static><pose>-1.05 -0.90 0.62 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><cylinder><radius>0.025</radius><length>1.24</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.025</radius><length>1.24</length></cylinder></geometry>
+          <material><ambient>0.90 0.75 0.00 1</ambient><diffuse>1.00 0.85 0.00 1</diffuse><specular>0.45 0.40 0.10 1</specular></material>
+        </visual>
+      </link>
+    </model>
+    <model name="post_br"><static>true</static><pose>-1.05 0.90 0.62 0 0 0</pose>
+      <link name="link"><collision name="col"><geometry><cylinder><radius>0.025</radius><length>1.24</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.025</radius><length>1.24</length></cylinder></geometry>
+          <material><ambient>0.90 0.75 0.00 1</ambient><diffuse>1.00 0.85 0.00 1</diffuse><specular>0.45 0.40 0.10 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Side rails (left y=-0.90, right y=+0.90) -->
+    <model name="rail_side_l_lo"><static>true</static><pose>0 -0.90 0.38 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>2.10 0.020 0.020</size></box></geometry>
+          <material><ambient>0.85 0.35 0.00 1</ambient><diffuse>1.00 0.42 0.00 1</diffuse><specular>0.35 0.20 0.05 1</specular></material>
+        </visual></link>
+    </model>
+    <model name="rail_side_l_hi"><static>true</static><pose>0 -0.90 0.90 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>2.10 0.020 0.020</size></box></geometry>
+          <material><ambient>0.85 0.35 0.00 1</ambient><diffuse>1.00 0.42 0.00 1</diffuse><specular>0.35 0.20 0.05 1</specular></material>
+        </visual></link>
+    </model>
+    <model name="rail_side_r_lo"><static>true</static><pose>0 0.90 0.38 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>2.10 0.020 0.020</size></box></geometry>
+          <material><ambient>0.85 0.35 0.00 1</ambient><diffuse>1.00 0.42 0.00 1</diffuse><specular>0.35 0.20 0.05 1</specular></material>
+        </visual></link>
+    </model>
+    <model name="rail_side_r_hi"><static>true</static><pose>0 0.90 0.90 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>2.10 0.020 0.020</size></box></geometry>
+          <material><ambient>0.85 0.35 0.00 1</ambient><diffuse>1.00 0.42 0.00 1</diffuse><specular>0.35 0.20 0.05 1</specular></material>
+        </visual></link>
+    </model>
+
+    <!-- Back rail (x=+1.05) -->
+    <model name="rail_back_lo"><static>true</static><pose>1.05 0 0.38 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.020 1.80 0.020</size></box></geometry>
+          <material><ambient>0.85 0.35 0.00 1</ambient><diffuse>1.00 0.42 0.00 1</diffuse><specular>0.35 0.20 0.05 1</specular></material>
+        </visual></link>
+    </model>
+    <model name="rail_back_hi"><static>true</static><pose>1.05 0 0.90 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.020 1.80 0.020</size></box></geometry>
+          <material><ambient>0.85 0.35 0.00 1</ambient><diffuse>1.00 0.42 0.00 1</diffuse><specular>0.35 0.20 0.05 1</specular></material>
+        </visual></link>
+    </model>
+
+    <!-- Front rails (x=-1.05) - two segments with access gap at centre -->
+    <model name="rail_front_lo_l"><static>true</static><pose>-1.05 -0.62 0.38 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.020 0.56 0.020</size></box></geometry>
+          <material><ambient>0.85 0.35 0.00 1</ambient><diffuse>1.00 0.42 0.00 1</diffuse><specular>0.35 0.20 0.05 1</specular></material>
+        </visual></link>
+    </model>
+    <model name="rail_front_lo_r"><static>true</static><pose>-1.05 0.62 0.38 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.020 0.56 0.020</size></box></geometry>
+          <material><ambient>0.85 0.35 0.00 1</ambient><diffuse>1.00 0.42 0.00 1</diffuse><specular>0.35 0.20 0.05 1</specular></material>
+        </visual></link>
+    </model>
+    <model name="rail_front_hi_l"><static>true</static><pose>-1.05 -0.62 0.90 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.020 0.56 0.020</size></box></geometry>
+          <material><ambient>0.85 0.35 0.00 1</ambient><diffuse>1.00 0.42 0.00 1</diffuse><specular>0.35 0.20 0.05 1</specular></material>
+        </visual></link>
+    </model>
+    <model name="rail_front_hi_r"><static>true</static><pose>-1.05 0.62 0.90 0 0 0</pose>
+      <link name="link"><visual name="vis"><geometry><box><size>0.020 0.56 0.020</size></box></geometry>
+          <material><ambient>0.85 0.35 0.00 1</ambient><diffuse>1.00 0.42 0.00 1</diffuse><specular>0.35 0.20 0.05 1</specular></material>
+        </visual></link>
+    </model>
+
+    <!-- =====================================================================
+         ROBOT CONTROLLER CABINET  -  dark enclosure, indicator LEDs, e-stop
+         Positioned behind the robot (robot faces -X, so this is at +X)
+         ===================================================================== -->
+
+    <model name="controller_cabinet">
+      <static>true</static>
+      <pose>1.90 0 0 0 0 0</pose>
+      <link name="body">
+        <pose>0 0 0.65 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.48 0.36 1.30</size></box></geometry></collision>
+        <visual name="vis_body">
+          <geometry><box><size>0.48 0.36 1.30</size></box></geometry>
+          <material><ambient>0.16 0.16 0.18 1</ambient><diffuse>0.20 0.20 0.22 1</diffuse><specular>0.40 0.40 0.40 1</specular></material>
+        </visual>
+        <!-- Front door panel -->
+        <visual name="vis_door">
+          <pose>-0.242 0 0 0 0 0</pose>
+          <geometry><box><size>0.002 0.32 1.20</size></box></geometry>
+          <material><ambient>0.26 0.26 0.30 1</ambient><diffuse>0.32 0.32 0.36 1</diffuse><specular>0.55 0.55 0.55 1</specular></material>
+        </visual>
+        <!-- Green power LED -->
+        <visual name="vis_led_pwr">
+          <pose>-0.243 0.10 0.45 0 0 0</pose>
+          <geometry><sphere><radius>0.013</radius></sphere></geometry>
+          <material><ambient>0.00 0.90 0.00 1</ambient><diffuse>0.00 1.00 0.00 1</diffuse><specular>1.00 1.00 1.00 1</specular></material>
+        </visual>
+        <!-- Yellow status LED -->
+        <visual name="vis_led_stat">
+          <pose>-0.243 0.10 0.40 0 0 0</pose>
+          <geometry><sphere><radius>0.013</radius></sphere></geometry>
+          <material><ambient>0.90 0.85 0.00 1</ambient><diffuse>1.00 0.90 0.00 1</diffuse><specular>1.00 1.00 1.00 1</specular></material>
+        </visual>
+        <!-- Red E-stop mushroom button -->
+        <visual name="vis_estop">
+          <pose>-0.243 0.10 0.30 0 0 0</pose>
+          <geometry><cylinder><radius>0.020</radius><length>0.018</length></cylinder></geometry>
+          <material><ambient>0.90 0.04 0.04 1</ambient><diffuse>1.00 0.05 0.05 1</diffuse><specular>0.80 0.50 0.50 1</specular></material>
+        </visual>
+        <!-- Ventilation grille (thin dark strip) -->
+        <visual name="vis_vent">
+          <pose>-0.243 0 -0.50 0 0 0</pose>
+          <geometry><box><size>0.002 0.28 0.06</size></box></geometry>
+          <material><ambient>0.10 0.10 0.10 1</ambient><diffuse>0.12 0.12 0.12 1</diffuse><specular>0.20 0.20 0.20 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- =====================================================================
+         OVERHEAD VISION CAMERA  -  pole + arm + camera body
+         Mounted to the side of workbench, angled to view the workspace
+         ===================================================================== -->
+
+    <model name="cam_pole">
+      <static>true</static>
+      <pose>0.30 -1.10 0.80 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.022</radius><length>1.60</length></cylinder></geometry></collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.022</radius><length>1.60</length></cylinder></geometry>
+          <material><ambient>0.22 0.22 0.22 1</ambient><diffuse>0.28 0.28 0.28 1</diffuse><specular>0.55 0.55 0.55 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="cam_arm">
+      <static>true</static>
+      <pose>0.05 -1.10 1.575 0 0 0</pose>
+      <link name="link">
+        <visual name="vis">
+          <geometry><box><size>0.35 0.022 0.022</size></box></geometry>
+          <material><ambient>0.22 0.22 0.22 1</ambient><diffuse>0.28 0.28 0.28 1</diffuse><specular>0.55 0.55 0.55 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="cam_body">
+      <static>true</static>
+      <pose>-0.13 -1.10 1.555 0 0.4 0</pose>
+      <link name="link">
+        <visual name="vis_box">
+          <geometry><box><size>0.07 0.065 0.055</size></box></geometry>
+          <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse><specular>0.65 0.65 0.65 1</specular></material>
+        </visual>
+        <!-- Lens (blue-tinted circle) -->
+        <visual name="vis_lens">
+          <pose>-0.036 0 0 0 1.5708 0</pose>
+          <geometry><cylinder><radius>0.018</radius><length>0.012</length></cylinder></geometry>
+          <material><ambient>0.04 0.04 0.55 1</ambient><diffuse>0.05 0.05 0.75 1</diffuse><specular>0.90 0.90 1.00 1</specular></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- =====================================================================
+         TOOL CART  -  yellow rolling cart beside workbench
+         ===================================================================== -->
+
+    <model name="tool_cart">
+      <static>true</static>
+      <pose>0.15 1.70 0 0 0 0</pose>
+
+      <link name="body">
+        <pose>0 0 0.50 0 0 0</pose>
+        <collision name="col"><geometry><box><size>0.52 0.36 1.00</size></box></geometry></collision>
+        <visual name="vis">
+          <geometry><box><size>0.52 0.36 1.00</size></box></geometry>
+          <material><ambient>0.70 0.58 0.02 1</ambient><diffuse>0.82 0.68 0.02 1</diffuse><specular>0.45 0.38 0.08 1</specular></material>
+        </visual>
+        <!-- Drawer 1 face -->
+        <visual name="drw1">
+          <pose>0.262 0 0.28 0 0 0</pose>
+          <geometry><box><size>0.003 0.32 0.11</size></box></geometry>
+          <material><ambient>0.14 0.12 0.02 1</ambient><diffuse>0.18 0.14 0.02 1</diffuse><specular>0.35 0.30 0.10 1</specular></material>
+        </visual>
+        <!-- Drawer 2 face -->
+        <visual name="drw2">
+          <pose>0.262 0 0.14 0 0 0</pose>
+          <geometry><box><size>0.003 0.32 0.11</size></box></geometry>
+          <material><ambient>0.14 0.12 0.02 1</ambient><diffuse>0.18 0.14 0.02 1</diffuse><specular>0.35 0.30 0.10 1</specular></material>
+        </visual>
+        <!-- Drawer handles (small silver bars) -->
+        <visual name="hdl1">
+          <pose>0.264 0 0.28 0 0 0</pose>
+          <geometry><box><size>0.003 0.10 0.010</size></box></geometry>
+          <material><ambient>0.70 0.70 0.70 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse><specular>0.90 0.90 0.90 1</specular></material>
+        </visual>
+        <visual name="hdl2">
+          <pose>0.264 0 0.14 0 0 0</pose>
+          <geometry><box><size>0.003 0.10 0.010</size></box></geometry>
+          <material><ambient>0.70 0.70 0.70 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse><specular>0.90 0.90 0.90 1</specular></material>
+        </visual>
+      </link>
+
+      <!-- 4 wheels -->
+      <link name="whl_fl"><pose>0.22 -0.15 0.06 1.5708 0 0</pose>
+        <visual name="vis"><geometry><cylinder><radius>0.055</radius><length>0.04</length></cylinder></geometry>
+          <material><ambient>0.06 0.06 0.06 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse><specular>0.30 0.30 0.30 1</specular></material>
+        </visual>
+      </link>
+      <link name="whl_fr"><pose>0.22 0.15 0.06 1.5708 0 0</pose>
+        <visual name="vis"><geometry><cylinder><radius>0.055</radius><length>0.04</length></cylinder></geometry>
+          <material><ambient>0.06 0.06 0.06 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse><specular>0.30 0.30 0.30 1</specular></material>
+        </visual>
+      </link>
+      <link name="whl_bl"><pose>-0.22 -0.15 0.06 1.5708 0 0</pose>
+        <visual name="vis"><geometry><cylinder><radius>0.055</radius><length>0.04</length></cylinder></geometry>
+          <material><ambient>0.06 0.06 0.06 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse><specular>0.30 0.30 0.30 1</specular></material>
+        </visual>
+      </link>
+      <link name="whl_br"><pose>-0.22 0.15 0.06 1.5708 0 0</pose>
+        <visual name="vis"><geometry><cylinder><radius>0.055</radius><length>0.04</length></cylinder></geometry>
+          <material><ambient>0.06 0.06 0.06 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse><specular>0.30 0.30 0.30 1</specular></material>
+        </visual>
+      </link>
+
+      <joint name="j_b"   type="fixed"><parent>body</parent><child>whl_fl</child></joint>
+      <joint name="j_wfr" type="fixed"><parent>body</parent><child>whl_fr</child></joint>
+      <joint name="j_wbl" type="fixed"><parent>body</parent><child>whl_bl</child></joint>
+      <joint name="j_wbr" type="fixed"><parent>body</parent><child>whl_br</child></joint>
+    </model>
+
+    <!-- =====================================================================
+         EMERGENCY STOP STATION  -  yellow post + red mushroom at fence gap
+         ===================================================================== -->
+
+    <model name="estop_station">
+      <static>true</static>
+      <pose>-1.15 0 0 0 0 0</pose>
+      <link name="pole">
+        <pose>0 0 0.65 0 0 0</pose>
+        <collision name="col"><geometry><cylinder><radius>0.022</radius><length>1.30</length></cylinder></geometry></collision>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.022</radius><length>1.30</length></cylinder></geometry>
+          <material><ambient>0.90 0.75 0.00 1</ambient><diffuse>1.00 0.85 0.00 1</diffuse><specular>0.45 0.40 0.10 1</specular></material>
+        </visual>
+      </link>
+      <link name="button">
+        <pose>0 0 1.22 0 0 0</pose>
+        <visual name="vis">
+          <geometry><cylinder><radius>0.042</radius><length>0.055</length></cylinder></geometry>
+          <material><ambient>0.90 0.04 0.04 1</ambient><diffuse>1.00 0.05 0.05 1</diffuse><specular>0.85 0.50 0.50 1</specular></material>
+        </visual>
+      </link>
+      <joint name="j" type="fixed"><parent>pole</parent><child>button</child></joint>
+    </model>
+
+  </world>
+</sdf>
