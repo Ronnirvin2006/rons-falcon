@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Launch MoveIt Servo + JoyToServoPub + joy_node for real-time joystick IK control.
+Launch MoveIt Servo + custom JoyServo + joy_node for real-time joystick IK control.
 
 Prerequisites (must already be running):
   - Gazebo with gz_ros2_control (arm_controller active)
@@ -16,8 +16,7 @@ import yaml
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node, ComposableNodeContainer
-from launch_ros.descriptions import ComposableNode
+from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 from moveit_configs_utils import MoveItConfigsBuilder
 
@@ -65,28 +64,23 @@ def generate_launch_description():
         output="screen",
     )
 
-    # Container for joy_node + JoyToServoPub (composable for zero-copy)
-    joy_servo_container = ComposableNodeContainer(
-        name="joy_servo_container",
-        namespace="/",
-        package="rclcpp_components",
-        executable="component_container_mt",
-        composable_node_descriptions=[
-            ComposableNode(
-                package="moveit_servo",
-                plugin="moveit_servo::JoyToServoPub",
-                name="joy_to_servo_node",
-                parameters=[{"use_sim_time": True}],
-            ),
-            ComposableNode(
-                package="joy",
-                plugin="joy::Joy",
-                name="joy_node",
-                parameters=[
-                    {"dev": LaunchConfiguration("joy_dev")},
-                    {"use_sim_time": True},
-                ],
-            ),
+    # Custom joy-to-servo bridge (replaces JoyToServoPub which has hardcoded Panda frames)
+    joy_servo_node = Node(
+        package="falcon_arm_teleop",
+        executable="joy_servo.py",
+        name="joy_servo",
+        parameters=[{"use_sim_time": True}],
+        output="screen",
+    )
+
+    # Joy node for reading the gamepad
+    joy_node = Node(
+        package="joy",
+        executable="joy_node",
+        name="joy_node",
+        parameters=[
+            {"dev": LaunchConfiguration("joy_dev")},
+            {"use_sim_time": True},
         ],
         output="screen",
     )
@@ -94,5 +88,6 @@ def generate_launch_description():
     return LaunchDescription([
         joy_dev_arg,
         servo_node,
-        joy_servo_container,
+        joy_servo_node,
+        joy_node,
     ])

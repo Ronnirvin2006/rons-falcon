@@ -1,7 +1,6 @@
 ###############################################
 # MoveIt Servo configuration for Falcon Arm
 ###############################################
-use_gazebo: true
 
 ## Properties of incoming commands
 command_in_type: "unitless"  # joystick range [-1:1]

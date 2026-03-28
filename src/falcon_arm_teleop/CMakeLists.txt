@@ -6,6 +6,7 @@ find_package(ament_cmake REQUIRED)
 install(PROGRAMS
   src/joy_teleop.py       # joystick-based teleop node
   src/slider_teleop.py    # GUI slider-based teleop node (tkinter)
+  src/joy_servo.py        # joystick → MoveIt Servo bridge
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -56,11 +56,11 @@ All packages use `ament_cmake`. The system has layered architecture:
 
 4. **Motion Planning** (`falcon_arm_moveit_config`) — MoveIt2 config with KDL kinematics. Planning group `falcon_arm` (joints 1-5), end effector `falcon_gripper` (gripper_joint_1). SRDF: `falcon_robotic_arm_description.srdf`.
 
-5. **MoveIt Servo** (`falcon_arm_moveit_config/config/servo.yaml`) — Real-time IK streaming via joystick. Publishes to `/arm_controller/joint_trajectory`. Uses `JoyToServoPub` composable node to convert Joy → TwistStamped.
+5. **MoveIt Servo** (`falcon_arm_moveit_config/config/servo.yaml`) — Real-time IK streaming via joystick. Publishes to `/arm_controller/joint_trajectory`. Uses custom `joy_servo.py` node (in `falcon_arm_teleop`) to convert Joy → TwistStamped with LB deadman switch and correct Falcon frames (world/link_5). KDL kinematics uses `position_only_ik: true` for the 5-DOF arm.
 
 6. **Simulation** (`falcon_arm_gazebo`) — Gazebo with `gz_ros2_control/GazeboSimSystem` and ros_gz_bridge.
 
-7. **Teleoperation** (`falcon_arm_teleop`) — Python nodes: `joy_teleop.py` (gamepad) and `slider_teleop.py` (tkinter GUI).
+7. **Teleoperation** (`falcon_arm_teleop`) — Python nodes: `joy_teleop.py` (gamepad), `slider_teleop.py` (tkinter GUI), and `joy_servo.py` (joystick → MoveIt Servo bridge).
 
 8. **Serial Library** (`serial`) — Vendored cross-platform UART library used by the hardware interface.
 
@@ -71,6 +71,7 @@ All packages use `ament_cmake`. The system has layered architecture:
 - `src/falcon_arm_moveit_config/config/servo.yaml` — MoveIt Servo configuration
 - `src/falcon_arm_moveit_config/config/moveit_controllers.yaml` — MoveIt controller mapping
 - `src/falcon_arm_bringup/config/falcon_controllers.yaml` — Bringup controller config (50 Hz)
+- `src/falcon_arm_teleop/src/joy_servo.py` — Joystick → MoveIt Servo bridge (Cosmic Byte Ares / Xbox layout)
 - `src/falcon_arm_hardware/SERIAL_PROTOCOL.md` — STM32 serial protocol spec
 
 ## Important: Gazebo + MoveIt Launch Pattern
@@ -80,6 +81,14 @@ Do NOT use `demo.launch.py` with Gazebo — it starts its own `ros2_control_node
 ## Xacro Arg/Property Pattern
 
 The ros2control xacro (`falcon_robotic_arm.ros2control.xacro`) uses `${hardware_type}` Python expressions, which require a `<xacro:property>` — not just a `<xacro:arg>`. Any xacro that includes the description must declare the required args (`sim_gazebo`, `hardware_type`, `serial_port`) so they propagate through. The MoveIt config's `falcon_robotic_arm.urdf.xacro` relies on the description's ros2_control block (not its own separate one).
+
+## Gazebo Mesh Resolution
+
+Gazebo converts `package://` URIs to `model://` internally. The `sim_bringup.launch.py` sets `IGN_GAZEBO_RESOURCE_PATH` to the install share parent directory so meshes resolve correctly in both Gazebo and RViz. Do NOT use absolute mesh paths in xacro — this breaks RViz's resource retriever.
+
+## Spawn Orientation
+
+The URDF `world_fixed` joint already applies -90° roll to stand the arm upright. Spawn commands must use `R=0.0` — adding another roll causes the robot to lie flat.
 
 ## Robot Kinematics
 

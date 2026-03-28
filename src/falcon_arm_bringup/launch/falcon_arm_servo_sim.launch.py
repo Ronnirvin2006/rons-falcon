@@ -45,7 +45,7 @@ def generate_launch_description():
             pkg_moveit + '/launch/move_group.launch.py'
         ),
     )
-    delayed_move_group = TimerAction(period=8.0, actions=[move_group])
+    delayed_move_group = TimerAction(period=12.0, actions=[move_group])
 
     # 3. RViz with MoveIt plugin
     moveit_rviz = IncludeLaunchDescription(
@@ -53,7 +53,7 @@ def generate_launch_description():
             pkg_moveit + '/launch/moveit_rviz.launch.py'
         ),
     )
-    delayed_rviz = TimerAction(period=9.0, actions=[moveit_rviz])
+    delayed_rviz = TimerAction(period=13.0, actions=[moveit_rviz])
 
     # 4. MoveIt Servo + joystick (needs move_group's planning scene)
     servo = IncludeLaunchDescription(
@@ -62,7 +62,7 @@ def generate_launch_description():
         ),
         launch_arguments={"joy_dev": LaunchConfiguration("joy_dev")}.items(),
     )
-    delayed_servo = TimerAction(period=12.0, actions=[servo])
+    delayed_servo = TimerAction(period=16.0, actions=[servo])
 
     return LaunchDescription([
         joy_dev_arg,

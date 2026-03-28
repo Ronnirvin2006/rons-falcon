@@ -119,6 +119,15 @@ def generate_launch_description():
         '/opt/ros/humble/lib',             # ROS2 Humble system library directory
     )
 
+    # Tell Ignition Gazebo where to find package:// meshes.
+    # Gazebo converts package://pkg_name/... to model://pkg_name/... and searches
+    # IGN_GAZEBO_RESOURCE_PATH. We point it at the install share directory so
+    # model://falcon_robotic_arm_description/meshes/... resolves correctly.
+    set_resource_path = AppendEnvironmentVariable(
+        'IGN_GAZEBO_RESOURCE_PATH',
+        os.path.join(pkg_description, '..'),  # parent of share/falcon_robotic_arm_description
+    )
+
     # -----------------------------------------------------------------------
     # Expand xacro to URDF string.
     #   sim_gazebo:=true → selects gz_ros2_control/GazeboSimSystem plugin in
@@ -170,9 +179,8 @@ def generate_launch_description():
     #     y = 0.0  m   → centred laterally
     #     z = 0.77 m   → workbench surface at 0.755 m + 15 mm clearance
     #   Orientation:
-    #     R = -1.5708  → -90 deg roll; corrects URDF base frame so arm stands upright
-    #     P =  0.0     → no pitch
-    #     Y =  3.14159 → 180 deg yaw; arm faces the coloured manipulation blocks
+    #     R/P = 0  → URDF world_fixed joint already applies -90° roll
+    #     Y = 3.14159 → 180 deg yaw; arm faces the coloured manipulation blocks
     # -----------------------------------------------------------------------
     spawn_robot = Node(
         package='ros_gz_sim',
@@ -186,7 +194,7 @@ def generate_launch_description():
             '-x',  '0.05',                             # 5 cm forward on workbench
             '-y',  '0.0',                              # centred on workbench
             '-z',  '0.77',                             # on top of workbench surface
-            '-R',  '-1.5708',                          # -90 deg roll → arm upright
+            '-R',  '0.0',                              # URDF handles orientation
             '-P',  '0.0',                              # no pitch
             '-Y',  '3.14159',                          # 180 deg yaw → faces blocks
         ],
@@ -275,9 +283,10 @@ def generate_launch_description():
         )
     )
 
-    # Wrap JSB in a 3-second timer — gives Gazebo time to load gz_ros2_control
+    # Wrap JSB in a 6-second timer — gives Gazebo time to fully load
+    # gz_ros2_control and start the physics loop before controller activation
     delayed_jsb = TimerAction(
-        period=3.0,           # delay in seconds from launch start
+        period=6.0,           # delay in seconds from launch start
         actions=[spawn_jsb],  # action to fire after the delay
     )
 
@@ -288,6 +297,7 @@ def generate_launch_description():
     # -----------------------------------------------------------------------
     return LaunchDescription([
         set_plugin_path,        # 1. Set env var before Gazebo reads it
+        set_resource_path,      # 1b. Set mesh resource path for Gazebo
         world_arg,              # 2. Register world_file CLI argument
         gz_sim,                 # 3. Start Gazebo with custom world
         robot_state_publisher,  # 4. Start RSP (publishes robot_description)
