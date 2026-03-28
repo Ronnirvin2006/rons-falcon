@@ -230,7 +230,7 @@
     <parent link="base_link" />
     <child link="link_1" />
     <axis xyz="0 0 -1" />
-    <limit lower="-1.5708" upper="1.5708" effort="20" velocity="1" />
+    <limit lower="-3.14159" upper="3.14159" effort="20" velocity="1" />
   </joint>
 
   <joint name="joint_2" type="revolute">
@@ -238,7 +238,7 @@
     <parent link="link_1" />
     <child link="link_2" />
     <axis xyz="-0.0303599450227944 0 0.999539030622723" />
-    <limit lower="-1.5708" upper="1.5708" effort="50" velocity="1" />
+    <limit lower="-3.14159" upper="3.14159" effort="50" velocity="1" />
     <dynamics damping="0.5" friction="0.0"/>
   </joint>
 
@@ -247,7 +247,7 @@
     <parent link="link_2" />
     <child link="link_3" />
     <axis xyz="-0.0303599450227945 0 0.999539030622723" />
-    <limit lower="-1.5708" upper="1.5708" effort="30" velocity="1" />
+    <limit lower="-3.14159" upper="3.14159" effort="30" velocity="1" />
     <dynamics damping="0.3" friction="0.0"/>
   </joint>
 
@@ -256,7 +256,7 @@
     <parent link="link_3" />
     <child link="link_4" />
     <axis xyz="0.818727734388728 0.0296401954212068 0.573416389509484" />
-    <limit lower="-1.5708" upper="1.5708" effort="20" velocity="1" />
+    <limit lower="-3.14159" upper="3.14159" effort="20" velocity="1" />
   </joint>
 
   <joint name="joint_5" type="revolute">
@@ -264,7 +264,7 @@
     <parent link="link_4" />
     <child link="link_5" />
     <axis xyz="-0.0223564735183862 -0.233891765016945 -0.972005571151256" />
-    <limit lower="-1.5708" upper="1.5708" effort="20" velocity="1" />
+    <limit lower="-3.14159" upper="3.14159" effort="20" velocity="1" />
   </joint>
 
   <joint name="gripper_joint_1" type="revolute">
