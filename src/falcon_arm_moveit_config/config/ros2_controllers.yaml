@@ -3,18 +3,16 @@ controller_manager:
   ros__parameters:
     update_rate: 100  # Hz
 
-    falcon_arm_controller:
+    arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
 
-
-    falcon_gripper_controller:
+    gripper_controller:
       type: joint_trajectory_controller/JointTrajectoryController
-
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-falcon_arm_controller:
+arm_controller:
   ros__parameters:
     joints:
       - joint_1
@@ -27,7 +25,10 @@ falcon_arm_controller:
     state_interfaces:
       - position
       - velocity
-falcon_gripper_controller:
+    open_loop_control: true
+    allow_nonzero_velocity_at_trajectory_end: true
+
+gripper_controller:
   ros__parameters:
     joints:
       - gripper_joint_1

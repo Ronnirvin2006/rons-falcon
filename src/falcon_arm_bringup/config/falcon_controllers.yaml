@@ -66,8 +66,10 @@ gripper_controller:
   ros__parameters:
     use_sim_time: false
     joints:
-      - joint_6
+      - gripper_joint_1
+      - gripper_joint_2
     command_interfaces:
       - position
     state_interfaces:
       - position
+      - velocity

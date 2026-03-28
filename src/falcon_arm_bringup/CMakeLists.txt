@@ -16,7 +16,7 @@ install(
   DESTINATION share/${PROJECT_NAME}/launch
 )
 
-# Install configuration files
+# Install config files
 install(
   DIRECTORY config/
   DESTINATION share/${PROJECT_NAME}/config

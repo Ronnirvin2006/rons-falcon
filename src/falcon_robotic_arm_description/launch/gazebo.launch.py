@@ -118,8 +118,7 @@ def generate_launch_description():
 
     # ---------------------------
     # Spawn robot into Gazebo
-    # R=1.5708 rotates arm upright
-    # (base_link is flat in the URDF due to joint_1 RPY offset)
+    # Orientation handled by world_fixed joint rpy in URDF
     # ---------------------------
     spawn_robot = Node(
         package="ros_gz_sim",

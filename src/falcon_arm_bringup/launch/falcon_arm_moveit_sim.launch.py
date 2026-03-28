@@ -67,26 +67,39 @@ def generate_launch_description():
     )
 
     # -----------------------------------------------------------------------
-    # 2. MoveIt2 demo launch (move_group + RViz with MoveIt plugin)
+    # 2. MoveIt2 move_group (planning server)
     #   Delayed 8 s: Gazebo + controllers need ~5 s; extra margin for
     #   move_group to find the active controllers before trying to connect.
-    #   use_sim_time:=true keeps MoveIt2 timestamps consistent with Gazebo.
+    #   NOTE: Do NOT use demo.launch.py here — it starts its own
+    #   ros2_control_node which conflicts with Gazebo's controller_manager.
     # -----------------------------------------------------------------------
-    moveit_demo = IncludeLaunchDescription(
+    move_group = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [pkg_moveit, '/launch/demo.launch.py']
+            [pkg_moveit, '/launch/move_group.launch.py']
         ),
-        launch_arguments={
-            'use_sim_time': 'true',   # align MoveIt2 timing with Gazebo /clock
-        }.items(),
     )
 
-    delayed_moveit = TimerAction(
-        period=8.0,                 # wait for Gazebo + controllers to stabilise
-        actions=[moveit_demo],      # then start MoveIt2
+    delayed_move_group = TimerAction(
+        period=8.0,
+        actions=[move_group],
+    )
+
+    # -----------------------------------------------------------------------
+    # 3. RViz2 with MoveIt2 motion-planning plugin
+    # -----------------------------------------------------------------------
+    moveit_rviz = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [pkg_moveit, '/launch/moveit_rviz.launch.py']
+        ),
+    )
+
+    delayed_rviz = TimerAction(
+        period=9.0,
+        actions=[moveit_rviz],
     )
 
     return LaunchDescription([
-        sim_bringup,       # 1. Start Gazebo simulation
-        delayed_moveit,    # 2. After 8 s — start MoveIt2 + RViz
+        sim_bringup,           # 1. Start Gazebo simulation
+        delayed_move_group,    # 2. After 8 s — start MoveIt2 move_group
+        delayed_rviz,          # 3. After 9 s — start RViz2
     ])

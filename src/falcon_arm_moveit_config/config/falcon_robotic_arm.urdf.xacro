@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="falcon_robotic_arm">
+    <xacro:arg name="initial_positions_file" default="initial_positions.yaml" />
+    <xacro:arg name="sim_gazebo"    default="false"/>
+    <xacro:arg name="hardware_type" default="fake"/>
+    <xacro:arg name="serial_port"   default="/dev/ttyACM0"/>
+
+    <!-- Import falcon_robotic_arm urdf file (includes ros2_control via description) -->
+    <xacro:include filename="$(find falcon_robotic_arm_description)/urdf/falcon_robotic_arm.xacro" />
+
+</robot>

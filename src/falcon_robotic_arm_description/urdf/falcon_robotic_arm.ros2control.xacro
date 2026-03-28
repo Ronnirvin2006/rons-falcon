@@ -23,29 +23,13 @@
   *  Author:         BARGAVAN R - MIT
   *  Co-Author:      RON NIRVIN J
   *
-  *  FIX (2026-03-15):
-  *    Added explicit xacro:arg declarations for sim_gazebo, hardware_type, serial_port
-  *    so this file can be safely evaluated standalone (e.g. by MoveIt Setup Assistant).
-  *    Replaced bare ${hardware_type == 'real'} expressions — which fail because
-  *    hardware_type is an arg, not a property — with a local xacro:property 'hw_type'
-  *    that is set from $(arg hardware_type).  The ${hw_type == 'real'} expression then
-  *    evaluates correctly in both standalone and included contexts.
-  *
   *  Usage:
   *    Included automatically by falcon_robotic_arm.xacro — do not include directly.
   *  *****************************************************************************************
 -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Declare args here so xacro can resolve them when this file is processed
-       both standalone (MoveIt Setup Assistant) and as an include. -->
-  <xacro:arg name="sim_gazebo"    default="false"/>
-  <xacro:arg name="hardware_type" default="fake"/>
-  <xacro:arg name="serial_port"   default="/dev/ttyACM0"/>
-
-  <!-- Resolve the arg into a property so it can be used in Python expressions
-       inside xacro:if / xacro:unless value="${...}" blocks. -->
-  <xacro:property name="hw_type" value="$(arg hardware_type)"/>
+  <xacro:property name="hardware_type" value="$(arg hardware_type)"/>
 
   <xacro:if value="$(arg sim_gazebo)">
     <ros2_control name="FalconArm" type="system">
@@ -149,10 +133,7 @@
   <xacro:unless value="$(arg sim_gazebo)">
     <ros2_control name="FalconArm" type="system">
 
-      <!-- FIX: was ${hardware_type == 'real'} — hardware_type is an xacro:arg, not a
-           property, so it cannot be used directly inside ${} Python expressions.
-           Use the hw_type property declared above instead. -->
-      <xacro:if value="${hw_type == 'real'}">
+      <xacro:if value="${hardware_type == 'real'}">
         <hardware>
           <plugin>falcon_arm_hardware/FalconArmHardwareInterface</plugin>
           <param name="serial_port">$(arg serial_port)</param>
@@ -161,10 +142,9 @@
         </hardware>
       </xacro:if>
 
-      <xacro:unless value="${hw_type == 'real'}">
+      <xacro:unless value="${hardware_type == 'real'}">
         <hardware>
           <plugin>mock_components/GenericSystem</plugin>
-          <!--<param name="calculate_dynamics">true</param> -->
         </hardware>
       </xacro:unless>
 
