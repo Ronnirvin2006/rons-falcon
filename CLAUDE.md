@@ -56,7 +56,7 @@ All packages use `ament_cmake`. The system has layered architecture:
 
 4. **Motion Planning** (`falcon_arm_moveit_config`) — MoveIt2 config with KDL kinematics. Planning group `falcon_arm` (joints 1-5), end effector `falcon_gripper` (gripper_joint_1). SRDF: `falcon_robotic_arm_description.srdf`.
 
-5. **MoveIt Servo** (`falcon_arm_moveit_config/config/servo.yaml`) — Real-time IK streaming via joystick. Publishes to `/arm_controller/joint_trajectory`. Uses custom `joy_servo.py` node (in `falcon_arm_teleop`) with START toggle enable, left/right sticks for EE cartesian control, LT/RT for gripper open/close, X button for singularity recovery to safe pose. KDL kinematics uses `position_only_ik: true` for the 5-DOF arm.
+5. **MoveIt Servo** (`falcon_arm_moveit_config/config/servo.yaml`) — Real-time IK streaming via joystick. Publishes to `/arm_controller/joint_trajectory`. Uses custom `joy_servo.py` node (in `falcon_arm_teleop`) with: START=toggle enable, left stick=XY, right stick=Z+yaw, LB/RB=rotate base joint via JointJog, LT/RT=gripper close/open, X=singularity recovery (stops servo, moves to safe pose, restarts servo). KDL kinematics uses `position_only_ik: true` for the 5-DOF arm.
 
 6. **Simulation** (`falcon_arm_gazebo`) — Gazebo with `gz_ros2_control/GazeboSimSystem` and ros_gz_bridge.
 

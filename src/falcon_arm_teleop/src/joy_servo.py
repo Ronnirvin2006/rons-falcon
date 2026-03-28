@@ -4,7 +4,7 @@ Joystick → MoveIt Servo bridge for Falcon Arm.
 
 Converts sensor_msgs/Joy to geometry_msgs/TwistStamped and publishes
 to MoveIt Servo's delta_twist_cmds topic.  Also controls the gripper
-via the gripper_controller and can recover from singularities.
+and can recover from singularities.
 
 Controller: Cosmic Byte Ares (Xbox-compatible layout)
   Press START to enable joystick control (toggle on/off)
@@ -14,6 +14,7 @@ Controller: Cosmic Byte Ares (Xbox-compatible layout)
     Left stick X  → linear.y  (left / right)
     Right stick Y → linear.z  (up / down)
     Right stick X → angular.z (yaw)
+    LB / RB       → rotate base joint left / right
     LT            → close gripper
     RT            → open gripper
     X             → recover to safe "ready" position (singularity escape)
@@ -26,6 +27,7 @@ from geometry_msgs.msg import TwistStamped
 from std_srvs.srv import Trigger
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from control_msgs.action import FollowJointTrajectory
+from control_msgs.msg import JointJog
 from builtin_interfaces.msg import Duration
 
 
@@ -40,6 +42,9 @@ VIEW, MENU = 6, 7
 # Safe "ready" pose for singularity recovery (matches SRDF ready state)
 SAFE_POSITIONS = [-0.5988, -0.3905, -0.1996, 0.4252, 0.1996]
 ARM_JOINTS = ['joint_1', 'joint_2', 'joint_3', 'joint_4', 'joint_5']
+
+# Base rotation speed (rad/s) when LB/RB pressed
+BASE_ROTATION_SPEED = 0.5
 
 
 class JoyServo(Node):
@@ -57,7 +62,7 @@ class JoyServo(Node):
         self.linear_scale = self.get_parameter('linear_scale').value
         self.angular_scale = self.get_parameter('angular_scale').value
 
-        # Command frame (always base frame for now)
+        # Command frame
         self.command_frame = self.base_frame
 
         # Enable state (toggled by START button)
@@ -66,14 +71,19 @@ class JoyServo(Node):
 
         # Gripper state
         self.gripper_position = 0.0  # 0.0 = open, -0.7 = closed
-        self.gripper_step = 0.02     # increment per joy callback
+        self.gripper_step = 0.02
 
-        # Twist publisher for MoveIt Servo
+        # Twist publisher for MoveIt Servo (cartesian)
         self.twist_pub = self.create_publisher(
             TwistStamped, '/servo_node/delta_twist_cmds', 10
         )
 
-        # Gripper command publisher (JointGroupPositionController)
+        # Joint jog publisher for MoveIt Servo (joint space — base rotation)
+        self.joint_pub = self.create_publisher(
+            JointJog, '/servo_node/delta_joint_cmds', 10
+        )
+
+        # Gripper command publisher (JointTrajectoryController topic interface)
         self.gripper_pub = self.create_publisher(
             JointTrajectory, '/gripper_controller/joint_trajectory', 10
         )
@@ -84,22 +94,24 @@ class JoyServo(Node):
             '/arm_controller/follow_joint_trajectory'
         )
 
+        # Servo start/stop service clients
+        self.start_servo_cli = self.create_client(Trigger, '/servo_node/start_servo')
+        self.stop_servo_cli = self.create_client(Trigger, '/servo_node/stop_servo')
+
         self.create_subscription(Joy, '/joy', self.joy_cb, 10)
 
-        # Recovery flag to avoid spamming
+        # Recovery flag
         self._recovering = False
 
-        # Call start_servo service
-        self.cli = self.create_client(Trigger, '/servo_node/start_servo')
+        # Start servo
         self.get_logger().info('Waiting for /servo_node/start_servo service...')
-        self.cli.wait_for_service(timeout_sec=30.0)
-        req = Trigger.Request()
-        future = self.cli.call_async(req)
+        self.start_servo_cli.wait_for_service(timeout_sec=30.0)
+        future = self.start_servo_cli.call_async(Trigger.Request())
         future.add_done_callback(self._start_cb)
 
         self.get_logger().info(
             'JoyServo ready — press START to enable, sticks to move EE, '
-            'LT/RT for gripper, X for safe position'
+            'LB/RB to rotate base, LT/RT for gripper, X for safe position'
         )
 
     def _start_cb(self, future):
@@ -112,15 +124,15 @@ class JoyServo(Node):
     def _publish_gripper(self):
         """Publish current gripper position to gripper_controller."""
         msg = JointTrajectory()
-        msg.joint_names = ['gripper_joint_1']
+        msg.joint_names = ['gripper_joint_1', 'gripper_joint_2']
         pt = JointTrajectoryPoint()
-        pt.positions = [self.gripper_position]
-        pt.time_from_start = Duration(sec=0, nanosec=100_000_000)  # 0.1s
+        pt.positions = [self.gripper_position, self.gripper_position]  # mimic
+        pt.time_from_start = Duration(sec=0, nanosec=100_000_000)
         msg.points = [pt]
         self.gripper_pub.publish(msg)
 
     def _send_safe_position(self):
-        """Send arm to safe ready pose via arm_controller action."""
+        """Stop servo, send arm to safe pose, then restart servo."""
         if self._recovering:
             return
         if not self.arm_action.wait_for_server(timeout_sec=2.0):
@@ -128,7 +140,11 @@ class JoyServo(Node):
             return
 
         self._recovering = True
-        self.get_logger().info('Recovering to safe position...')
+        self.get_logger().info('Stopping servo and recovering to safe position...')
+
+        # Stop servo so it doesn't fight the recovery trajectory
+        if self.stop_servo_cli.service_is_ready():
+            self.stop_servo_cli.call_async(Trigger.Request())
 
         goal = FollowJointTrajectory.Goal()
         goal.trajectory.joint_names = ARM_JOINTS
@@ -144,14 +160,21 @@ class JoyServo(Node):
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().warn('Recovery goal rejected')
-            self._recovering = False
+            self._restart_servo()
             return
         result_future = goal_handle.get_result_async()
         result_future.add_done_callback(self._recovery_done_cb)
 
     def _recovery_done_cb(self, future):
+        self.get_logger().info('Recovery complete — restarting servo')
+        self._restart_servo()
+
+    def _restart_servo(self):
+        """Restart MoveIt Servo after recovery."""
         self._recovering = False
-        self.get_logger().info('Recovery to safe position complete')
+        if self.start_servo_cli.service_is_ready():
+            future = self.start_servo_cli.call_async(Trigger.Request())
+            future.add_done_callback(self._start_cb)
 
     def joy_cb(self, msg: Joy):
         # Toggle enable with START button (rising edge)
@@ -162,7 +185,7 @@ class JoyServo(Node):
             self.get_logger().info(f'Joystick control {state}')
         self._prev_start = start_pressed
 
-        if not self.enabled:
+        if not self.enabled or self._recovering:
             return
 
         axes = msg.axes
@@ -173,18 +196,34 @@ class JoyServo(Node):
             return
 
         # LT/RT → gripper control
-        # Triggers default to 1.0 (released) → -1.0 (fully pressed)
         if len(axes) > RT:
-            lt_val = (1.0 - axes[LT]) / 2.0 if len(axes) > LT else 0.0  # 0→1
-            rt_val = (1.0 - axes[RT]) / 2.0 if len(axes) > RT else 0.0   # 0→1
-            if lt_val > 0.1:  # LT pressed → close
+            lt_val = (1.0 - axes[LT]) / 2.0 if len(axes) > LT else 0.0
+            rt_val = (1.0 - axes[RT]) / 2.0 if len(axes) > RT else 0.0
+            if lt_val > 0.1:  # LT → close
                 self.gripper_position = max(-0.7, self.gripper_position - self.gripper_step * lt_val)
                 self._publish_gripper()
-            elif rt_val > 0.1:  # RT pressed → open
+            elif rt_val > 0.1:  # RT → open
                 self.gripper_position = min(0.0, self.gripper_position + self.gripper_step * rt_val)
                 self._publish_gripper()
 
-        # Twist command for MoveIt Servo
+        # LB/RB → rotate base joint (joint_1) via joint jog
+        lb_pressed = len(msg.buttons) > LB and msg.buttons[LB]
+        rb_pressed = len(msg.buttons) > RB and msg.buttons[RB]
+        if lb_pressed or rb_pressed:
+            jog = JointJog()
+            jog.header.stamp = self.get_clock().now().to_msg()
+            jog.header.frame_id = self.base_frame
+            jog.joint_names = ['joint_1']
+            velocity = 0.0
+            if lb_pressed:
+                velocity = BASE_ROTATION_SPEED   # rotate left
+            if rb_pressed:
+                velocity = -BASE_ROTATION_SPEED  # rotate right
+            jog.velocities = [velocity]
+            self.joint_pub.publish(jog)
+            return  # don't send twist when jogging joints
+
+        # Twist command for MoveIt Servo (cartesian EE control)
         twist = TwistStamped()
         twist.header.stamp = self.get_clock().now().to_msg()
         twist.header.frame_id = self.command_frame
